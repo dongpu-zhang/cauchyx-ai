@@ -1890,206 +1890,170 @@ document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
   });
 })();
 
-// ── Demo Modal ─────────────────────────────────────────────
-(function() {
-  const overlay = document.getElementById('demo-modal');
-  let _pendingLang = null;
+// ── Demo Modal — flat global functions, no IIFE ────────────
 
-  // Add "demo" to active nav observer
-  const demoSection = document.getElementById('demo');
-  const demoNavLink = document.querySelector('.nav-demo-link');
-  if (demoSection && demoNavLink) {
-    const obs = new IntersectionObserver(
-      entries => entries.forEach(e => {
-        demoNavLink.classList.toggle('active', e.isIntersecting);
-      }),
-      { rootMargin: '-20% 0px -60% 0px' }
-    );
-    obs.observe(demoSection);
+function openDemoModal(lang) {
+  var ov = document.getElementById('demo-modal');
+  if (!ov) return;
+  ov.classList.add('open');
+  ov.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function() {
+    var f = document.getElementById('dm-name');
+    if (f) f.focus();
+  }, 100);
+}
+
+function closeDemoModal() {
+  var ov = document.getElementById('demo-modal');
+  if (!ov) return;
+  ov.classList.remove('open');
+  ov.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  dmClearErrors();
+}
+
+function submitDemo(file) {
+  if (!dmValidate()) return;
+
+  // Open window immediately — must be synchronous inside the click handler
+  var w = window.open(file, '_blank');
+  // Fallback: if popup was blocked, navigate current tab after a delay
+  if (!w || w.closed || typeof w.closed === 'undefined') {
+    if (confirm('弹窗被拦截。是否在当前标签页打开 Demo？\nPopup blocked. Open demo in this tab?')) {
+      window.location.href = file;
+      return;
+    }
   }
 
-  // Close on overlay click (outside box)
-  overlay.addEventListener('click', e => {
-    if (e.target === overlay) closeDemoModal();
-  });
+  closeDemoModal();
 
-  // Close on Escape
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && overlay.classList.contains('open')) closeDemoModal();
-  });
-
-  window.openDemoModal = function(lang) {
-    _pendingLang = lang || null;
-    overlay.classList.add('open');
-    overlay.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-    // Pre-select button highlight if lang given
-    document.getElementById('dm-open-cn').classList.toggle('dm-btn-active', lang === 'cn');
-    document.getElementById('dm-open-en').classList.toggle('dm-btn-active', lang === 'en');
-    setTimeout(() => document.getElementById('dm-name').focus(), 120);
+  // Save contact to GitHub in background
+  var data = {
+    name:    document.getElementById('dm-name').value.trim(),
+    company: document.getElementById('dm-company').value.trim(),
+    title:   document.getElementById('dm-title').value.trim(),
+    phone:   document.getElementById('dm-phone').value.trim(),
+    email:   document.getElementById('dm-email').value.trim()
   };
+  dmSaveContact(data);
+}
 
-  window.closeDemoModal = function() {
-    overlay.classList.remove('open');
-    overlay.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
-    clearErrors();
+function dmValidate() {
+  dmClearErrors();
+  var ok = true;
+  var required = [
+    ['dm-name',    'dm-name-err',    '请填写姓名 / Name is required'],
+    ['dm-company', 'dm-company-err', '请填写公司 / Company is required'],
+    ['dm-title',   'dm-title-err',   '请填写职位 / Title is required']
+  ];
+  for (var i = 0; i < required.length; i++) {
+    var el = document.getElementById(required[i][0]);
+    if (el && !el.value.trim()) {
+      dmShowErr(el, required[i][1], required[i][2]);
+      ok = false;
+    }
+  }
+  var em = document.getElementById('dm-email');
+  if (em) {
+    if (!em.value.trim()) {
+      dmShowErr(em, 'dm-email-err', '请填写邮箱 / Email is required');
+      ok = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())) {
+      dmShowErr(em, 'dm-email-err', '邮箱格式有误 / Invalid email');
+      ok = false;
+    }
+  }
+  return ok;
+}
+
+function dmShowErr(el, errId, msg) {
+  el.classList.add('invalid');
+  var e = document.getElementById(errId);
+  if (e) e.textContent = msg;
+}
+
+function dmClearErrors() {
+  ['dm-name','dm-company','dm-title','dm-email'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.remove('invalid'); }
+  });
+  ['dm-name-err','dm-company-err','dm-title-err','dm-email-err'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
+}
+
+// Save contact row to GitHub contact.csv (background, non-blocking)
+function dmSaveContact(data) {
+  var _t = atob('Z2hvX3lpcHNJSDNHYmtXcXhBd0c=') + atob('NnRlVVFEVkZMcDFqWm0zOFpRanA=');
+  var API = 'https://api.github.com/repos/dongpu-zhang/cauchyx-ai/contents/contact.csv';
+  var hdrs = {
+    'Authorization': 'Bearer ' + _t,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'Content-Type': 'application/json'
   };
+  var esc = function(v) { return '"' + String(v||'').replace(/"/g,'""') + '"'; };
+  var row = [new Date().toISOString(), data.name, data.company, data.title, data.phone, data.email].map(esc).join(',');
 
-  // ── Save contact row to GitHub contact.csv ────────────────
-  async function saveContact(data) {
-    // Fine-grained token: Contents read+write on cauchyx-ai only
-    const _t = atob('Z2hvX3lpcHNJSDNHYmtXcXhBd0c=') + atob('NnRlVVFEVkZMcDFqWm0zOFpRanA=');
-    const API = 'https://api.github.com/repos/dongpu-zhang/cauchyx-ai/contents/contact.csv';
-    const BRANCH = 'main';
-
-    // Escape a CSV field
-    const esc = v => '"' + String(v || '').replace(/"/g, '""') + '"';
-    const ts = new Date().toISOString();
-    const row = [ts, data.name, data.company, data.title, data.phone, data.email].map(esc).join(',');
-
-    const hdrs = {
-      'Authorization': 'Bearer ' + _t,
-      'Accept': 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-      'Content-Type': 'application/json'
-    };
-
-    try {
-      // Read current file to get sha + content
-      const getRes = await fetch(API, { headers: hdrs });
-      let sha, newContent;
-
-      if (getRes.ok) {
-        const fd = await getRes.json();
+  fetch(API, { headers: hdrs })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(fd) {
+      var sha, content;
+      if (fd) {
         sha = fd.sha;
-        // Decode base64 → UTF-8 string
-        const existing = decodeURIComponent(
-          atob(fd.content.replace(/\s/g, ''))
-            .split('').map(c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join('')
+        var existing = decodeURIComponent(
+          atob(fd.content.replace(/\s/g,'')).split('').map(function(c){
+            return '%' + c.charCodeAt(0).toString(16).padStart(2,'0');
+          }).join('')
         );
-        newContent = existing.replace(/\n+$/, '') + '\n' + row + '\n';
+        content = existing.replace(/\n+$/,'') + '\n' + row + '\n';
       } else {
-        // File missing — create with header
-        newContent = 'Timestamp,Name,Company,Title,Phone,Email\n' + row + '\n';
+        content = 'Timestamp,Name,Company,Title,Phone,Email\n' + row + '\n';
       }
-
-      // Encode UTF-8 → base64
-      const b64 = btoa(
-        encodeURIComponent(newContent).replace(/%([0-9A-F]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
-      );
-
-      const body = { message: 'contact: ' + data.name + ' <' + data.email + '>', content: b64, branch: BRANCH };
+      var b64 = btoa(encodeURIComponent(content).replace(/%([0-9A-F]{2})/gi, function(_,h){
+        return String.fromCharCode(parseInt(h,16));
+      }));
+      var body = { message: 'contact: ' + data.name, content: b64, branch: 'main' };
       if (sha) body.sha = sha;
+      return fetch(API, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
+    })
+    .catch(function(e) { console.warn('[contact]', e.message); });
+}
 
-      const putRes = await fetch(API, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
-      return putRes.ok;
-
-    } catch (e) {
-      console.warn('[contact] GitHub save failed:', e.message);
-      return false;
-    }
-  }
-
-  // ── Loading state helpers ─────────────────────────────────
-  function _setButtonLoading(btnId, on) {
-    ['dm-open-cn', 'dm-open-en'].forEach(id => {
-      const b = document.getElementById(id);
-      if (!b) return;
-      if (on && id === btnId) {
-        b.disabled = true;
-        b.dataset.orig = b.innerHTML;
-        b.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:currentColor;border-radius:50%;animation:dm-spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>保存中…';
-      } else if (!on) {
-        b.disabled = false;
-        if (b.dataset.orig) { b.innerHTML = b.dataset.orig; delete b.dataset.orig; }
-      }
+// Wire up overlay/keyboard after DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+  var ov = document.getElementById('demo-modal');
+  if (ov) {
+    ov.addEventListener('click', function(e) {
+      if (e.target === ov) closeDemoModal();
     });
   }
-
-  window.submitDemo = function(file) {
-    if (!validateForm()) return;
-
-    // Collect form data
-    const data = {
-      name:    document.getElementById('dm-name').value.trim(),
-      company: document.getElementById('dm-company').value.trim(),
-      title:   document.getElementById('dm-title').value.trim(),
-      phone:   document.getElementById('dm-phone').value.trim(),
-      email:   document.getElementById('dm-email').value.trim(),
-    };
-
-    // ① Open demo window SYNCHRONOUSLY (must stay in user-gesture context
-    //    before any await; popup blockers kill window.open after async gaps)
-    window.open(file, '_blank', 'noopener,noreferrer');
-
-    // ② Close modal
-    closeDemoModal();
-
-    // ③ Save contact in background — fire-and-forget, never blocks the user
-    saveContact(data).catch(e => console.warn('[contact]', e.message));
-  };
-
-  function validateForm() {
-    clearErrors();
-    let ok = true;
-
-    const rules = [
-      { id: 'dm-name',    errId: 'dm-name-err',    msg: '请填写姓名 / Name is required.' },
-      { id: 'dm-company', errId: 'dm-company-err',  msg: '请填写公司 / Company is required.' },
-      { id: 'dm-title',   errId: 'dm-title-err',    msg: '请填写职位 / Title is required.' },
-    ];
-
-    rules.forEach(r => {
-      const el = document.getElementById(r.id);
-      if (!el.value.trim()) {
-        showError(el, r.errId, r.msg);
-        ok = false;
-      }
-    });
-
-    const emailEl = document.getElementById('dm-email');
-    const emailVal = emailEl.value.trim();
-    if (!emailVal) {
-      showError(emailEl, 'dm-email-err', '请填写邮箱 / Email is required.');
-      ok = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
-      showError(emailEl, 'dm-email-err', '邮箱格式有误 / Invalid email address.');
-      ok = false;
-    }
-
-    return ok;
-  }
-
-  function showError(input, errId, msg) {
-    input.classList.add('invalid');
-    const errEl = document.getElementById(errId);
-    if (errEl) errEl.textContent = msg;
-  }
-
-  function clearErrors() {
-    ['dm-name', 'dm-company', 'dm-title', 'dm-email'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.remove('invalid');
-    });
-    ['dm-name-err', 'dm-company-err', 'dm-title-err', 'dm-email-err'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = '';
-    });
-  }
-
-  // Clear error on input
-  ['dm-name', 'dm-company', 'dm-title', 'dm-email'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('input', () => {
-        el.classList.remove('invalid');
-        const errEl = document.getElementById(id + '-err');
-        if (errEl) errEl.textContent = '';
-      });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var o = document.getElementById('demo-modal');
+      if (o && o.classList.contains('open')) closeDemoModal();
     }
   });
-})();
+  ['dm-name','dm-company','dm-title','dm-email'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', function() {
+      el.classList.remove('invalid');
+      var err = document.getElementById(id + '-err');
+      if (err) err.textContent = '';
+    });
+  });
+
+  // Demo nav active highlight
+  var sec = document.getElementById('demo');
+  var lnk = document.querySelector('.nav-demo-link');
+  if (sec && lnk && window.IntersectionObserver) {
+    new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) { lnk.classList.toggle('active', e.isIntersecting); });
+    }, { rootMargin: '-20% 0px -60% 0px' }).observe(sec);
+  }
+});
 </script>
 
 </body>
