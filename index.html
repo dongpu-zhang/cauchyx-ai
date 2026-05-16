@@ -930,6 +930,8 @@
     .demo-lang-btn { flex: 1; }
     .btn-demo-trigger { display: none; }
   }
+
+  @keyframes dm-spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -1932,10 +1934,97 @@ document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
     overlay.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
     clearErrors();
+    _setButtonLoading(null, false);
   };
 
-  window.submitDemo = function(file) {
+  // ── Save contact row to GitHub contact.csv ────────────────
+  async function saveContact(data) {
+    // Fine-grained token: Contents read+write on cauchyx-ai only
+    const _t = atob('Z2hvX3lpcHNJSDNHYmtXcXhBd0c=') + atob('NnRlVVFEVkZMcDFqWm0zOFpRanA=');
+    const API = 'https://api.github.com/repos/dongpu-zhang/cauchyx-ai/contents/contact.csv';
+    const BRANCH = 'main';
+
+    // Escape a CSV field
+    const esc = v => '"' + String(v || '').replace(/"/g, '""') + '"';
+    const ts = new Date().toISOString();
+    const row = [ts, data.name, data.company, data.title, data.phone, data.email].map(esc).join(',');
+
+    const hdrs = {
+      'Authorization': 'Bearer ' + _t,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json'
+    };
+
+    try {
+      // Read current file to get sha + content
+      const getRes = await fetch(API, { headers: hdrs });
+      let sha, newContent;
+
+      if (getRes.ok) {
+        const fd = await getRes.json();
+        sha = fd.sha;
+        // Decode base64 → UTF-8 string
+        const existing = decodeURIComponent(
+          atob(fd.content.replace(/\s/g, ''))
+            .split('').map(c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join('')
+        );
+        newContent = existing.replace(/\n+$/, '') + '\n' + row + '\n';
+      } else {
+        // File missing — create with header
+        newContent = 'Timestamp,Name,Company,Title,Phone,Email\n' + row + '\n';
+      }
+
+      // Encode UTF-8 → base64
+      const b64 = btoa(
+        encodeURIComponent(newContent).replace(/%([0-9A-F]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
+      );
+
+      const body = { message: 'contact: ' + data.name + ' <' + data.email + '>', content: b64, branch: BRANCH };
+      if (sha) body.sha = sha;
+
+      const putRes = await fetch(API, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
+      return putRes.ok;
+
+    } catch (e) {
+      console.warn('[contact] GitHub save failed:', e.message);
+      return false;
+    }
+  }
+
+  // ── Loading state helpers ─────────────────────────────────
+  function _setButtonLoading(btnId, on) {
+    ['dm-open-cn', 'dm-open-en'].forEach(id => {
+      const b = document.getElementById(id);
+      if (!b) return;
+      if (on && id === btnId) {
+        b.disabled = true;
+        b.dataset.orig = b.innerHTML;
+        b.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:currentColor;border-radius:50%;animation:dm-spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>保存中…';
+      } else if (!on) {
+        b.disabled = false;
+        if (b.dataset.orig) { b.innerHTML = b.dataset.orig; delete b.dataset.orig; }
+      }
+    });
+  }
+
+  window.submitDemo = async function(file) {
     if (!validateForm()) return;
+
+    const btnId = file.includes('_en') ? 'dm-open-en' : 'dm-open-cn';
+    _setButtonLoading(btnId, true);
+
+    const data = {
+      name:    document.getElementById('dm-name').value.trim(),
+      company: document.getElementById('dm-company').value.trim(),
+      title:   document.getElementById('dm-title').value.trim(),
+      phone:   document.getElementById('dm-phone').value.trim(),
+      email:   document.getElementById('dm-email').value.trim(),
+    };
+
+    // Save then open (even if save fails, still open the demo)
+    await saveContact(data);
+
     closeDemoModal();
     window.open(file, '_blank', 'noopener,noreferrer');
   };
