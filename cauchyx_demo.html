@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CauchyX AI · O-PINN Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #04060f;
+  --surface: #080d1a;
+  --surface2: #0c1223;
+  --border: #152040;
+  --border2: #1e3060;
+  --cyan: #00d4ff;
+  --cyan-dim: rgba(0,212,255,0.12);
+  --emerald: #00ff9d;
+  --emerald-dim: rgba(0,255,157,0.1);
+  --amber: #ffb800;
+  --amber-dim: rgba(255,184,0,0.1);
+  --violet: #a78bfa;
+  --violet-dim: rgba(167,139,250,0.12);
+  --rose: #ff4d6d;
+  --muted: #4a5a7a;
+  --text: #c8d8f0;
+  --text-bright: #e8f0ff;
+  --font-main: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-main);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Noise overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.6;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,13,26,0.9);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-mark {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--cyan);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-mark::after {
+  content: '∮';
+  color: var(--cyan);
+  font-size: 16px;
+  font-family: var(--font-mono);
+}
+
+.logo-text { font-size: 15px; font-weight: 600; color: var(--text-bright); letter-spacing: 0.3px; }
+.logo-sub { font-size: 10px; color: var(--muted); font-family: var(--font-mono); letter-spacing: 1px; }
+
+.header-tags { display: flex; gap: 8px; align-items: center; }
+.tag {
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+  border: 1px solid;
+}
+.tag-cyan { color: var(--cyan); border-color: rgba(0,212,255,0.3); background: var(--cyan-dim); }
+.tag-emerald { color: var(--emerald); border-color: rgba(0,255,157,0.3); background: var(--emerald-dim); }
+.tag-amber { color: var(--amber); border-color: rgba(255,184,0,0.3); background: var(--amber-dim); }
+
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--emerald);
+  animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,255,157,0.4)} 50%{opacity:0.7;box-shadow:0 0 0 4px rgba(0,255,157,0)} }
+
+/* Main layout */
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-section { padding: 16px; border-bottom: 1px solid var(--border); }
+.sidebar-label { font-size: 9px; font-family: var(--font-mono); color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+
+.scenario-btn {
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-main);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: all 0.2s;
+  line-height: 1.4;
+}
+.scenario-btn:hover { border-color: var(--cyan); background: var(--cyan-dim); color: var(--cyan); }
+.scenario-btn.active { border-color: var(--cyan); background: var(--cyan-dim); color: var(--cyan); }
+.scenario-btn .s-icon { font-size: 14px; margin-right: 6px; }
+.scenario-btn .s-title { font-weight: 600; display: block; margin-bottom: 2px; }
+.scenario-btn .s-desc { font-size: 9px; color: var(--muted); font-family: var(--font-mono); }
+.scenario-btn.active .s-desc { color: rgba(0,212,255,0.6); }
+
+/* Pipeline status */
+.pipeline { padding: 14px 16px; flex: 1; overflow-y: auto; }
+.pipeline-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  position: relative;
+}
+.pipeline-step::after {
+  content: '';
+  position: absolute;
+  left: 11px; top: 28px; bottom: -8px;
+  width: 1px;
+  background: var(--border);
+}
+.pipeline-step:last-child::after { display: none; }
+
+.step-dot {
+  width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-family: var(--font-mono); color: var(--muted);
+  flex-shrink: 0; background: var(--surface); transition: all 0.4s;
+}
+.step-dot.active { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-dim); }
+.step-dot.done { border-color: var(--emerald); color: var(--emerald); background: var(--emerald-dim); }
+.step-dot.error { border-color: var(--rose); color: var(--rose); background: rgba(255,77,109,0.1); }
+
+.step-info { flex: 1; min-width: 0; }
+.step-name { font-size: 11px; font-weight: 500; color: var(--text); }
+.step-name.active { color: var(--cyan); }
+.step-name.done { color: var(--emerald); }
+.step-detail { font-size: 9px; font-family: var(--font-mono); color: var(--muted); margin-top: 2px; }
+
+/* Chat area */
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Grid background for chat */
+.chat-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scroll-behavior: smooth;
+}
+
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-track { background: transparent; }
+.messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Message bubbles */
+.msg { display: flex; gap: 12px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.msg.user { flex-direction: row-reverse; }
+
+.msg-avatar {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0; font-weight: 600;
+}
+.msg.user .msg-avatar { background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.3); color: var(--violet); font-size: 12px; }
+.msg.agent .msg-avatar { background: var(--cyan-dim); border: 1px solid rgba(0,212,255,0.3); color: var(--cyan); font-size: 13px; }
+
+.msg-content { max-width: 72%; }
+.msg.user .msg-content { align-items: flex-end; }
+
+.msg-bubble {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  position: relative;
+}
+.msg.user .msg-bubble {
+  background: rgba(167,139,250,0.12);
+  border: 1px solid rgba(167,139,250,0.25);
+  color: var(--text-bright);
+  border-radius: 12px 4px 12px 12px;
+}
+.msg.agent .msg-bubble {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 4px 12px 12px 12px;
+}
+
+/* Thought blocks */
+.thought-block {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border-left: 2px solid;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  line-height: 1.7;
+}
+.thought-cyan { border-color: var(--cyan); background: var(--cyan-dim); color: rgba(0,212,255,0.8); }
+.thought-emerald { border-color: var(--emerald); background: var(--emerald-dim); color: rgba(0,255,157,0.8); }
+.thought-amber { border-color: var(--amber); background: var(--amber-dim); color: rgba(255,184,0,0.8); }
+.thought-violet { border-color: var(--violet); background: var(--violet-dim); color: rgba(167,139,250,0.8); }
+.thought-label { font-weight: 600; margin-bottom: 3px; letter-spacing: 0.5px; font-size: 9px; text-transform: uppercase; opacity: 0.7; }
+
+/* Code block */
+.code-block {
+  margin: 8px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.code-header {
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--border);
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.code-header span { color: var(--cyan); }
+pre {
+  padding: 12px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  line-height: 1.7;
+  overflow-x: auto;
+  background: rgba(0,0,0,0.3);
+  color: #88c0d0;
+}
+pre .kw { color: #81a1c1; }
+pre .str { color: #a3be8c; }
+pre .num { color: #b48ead; }
+pre .cm { color: #4c566a; }
+pre .fn { color: #88c0d0; }
+pre .var { color: #d8dee9; }
+
+/* Heatmap visualization */
+.heatmap-container {
+  margin: 10px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.heatmap-header {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--cyan);
+  display: flex; gap: 12px; align-items: center;
+}
+.heatmap-header .dot { width: 6px; height: 6px; border-radius: 50%; }
+.heatmap-body { padding: 12px; }
+canvas { display: block; border-radius: 4px; width: 100%; }
+
+/* Metric row */
+.metrics { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+.metric {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid;
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+.metric-label { opacity: 0.6; font-size: 9px; }
+.metric-value { font-weight: 600; font-size: 13px; }
+
+/* Progress bar */
+.progress-wrap { margin: 8px 0; }
+.progress-label { font-size: 10px; font-family: var(--font-mono); color: var(--muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+.progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s ease; }
+
+/* Input area */
+.input-area {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border);
+  background: rgba(8,13,26,0.8);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+
+.input-row { display: flex; gap: 10px; align-items: flex-end; }
+
+.input-box {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 11px 14px;
+  color: var(--text-bright);
+  font-family: var(--font-main);
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  height: 44px;
+  line-height: 22px;
+  transition: border-color 0.2s;
+}
+.input-box:focus { border-color: var(--cyan); }
+.input-box::placeholder { color: var(--muted); }
+
+.send-btn {
+  width: 44px; height: 44px;
+  background: var(--cyan);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.send-btn:hover { background: #00b8e0; transform: scale(1.05); }
+.send-btn:disabled { background: var(--border2); cursor: not-allowed; transform: none; }
+
+.input-hints { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.hint-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.hint-chip:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-dim); }
+
+/* Right panel */
+.right-panel {
+  width: 280px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.panel-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.panel-title { font-size: 11px; font-weight: 600; color: var(--text-bright); }
+.panel-sub { font-size: 9px; font-family: var(--font-mono); color: var(--muted); margin-top: 2px; }
+.panel-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
+
+.kernel-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  transition: all 0.3s;
+}
+.kernel-card.active { border-color: var(--cyan); background: var(--cyan-dim); }
+.kernel-card.done { border-color: var(--emerald); background: var(--emerald-dim); }
+.kernel-name { font-size: 10px; font-weight: 600; color: var(--text-bright); }
+.kernel-card.active .kernel-name { color: var(--cyan); }
+.kernel-card.done .kernel-name { color: var(--emerald); }
+.kernel-desc { font-size: 9px; font-family: var(--font-mono); color: var(--muted); margin-top: 3px; line-height: 1.5; }
+
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; }
+.stat-key { font-size: 10px; color: var(--muted); }
+.stat-val { font-size: 10px; font-family: var(--font-mono); font-weight: 600; color: var(--text-bright); }
+
+/* Typing cursor */
+.cursor { display: inline-block; width: 2px; height: 13px; background: var(--cyan); animation: blink 0.8s infinite; vertical-align: middle; margin-left: 2px; }
+@keyframes blink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
+
+/* Spinner */
+.spinner { display: inline-block; width: 12px; height: 12px; border: 1.5px solid var(--border2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Scrollbar */
+.panel-body::-webkit-scrollbar { width: 3px; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.sidebar::-webkit-scrollbar { width: 3px; }
+
+.welcome-text { font-size: 13px; color: var(--muted); text-align: center; padding: 40px 20px; line-height: 1.7; }
+.welcome-text strong { color: var(--cyan); }
+
+/* Loss curve mini viz */
+.loss-curve { width: 100%; height: 60px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-mark"></div>
+    <div>
+      <div class="logo-text">CauchyX AI · O-PINN</div>
+      <div class="logo-sub">THERMAL SIMULATION PLATFORM</div>
+    </div>
+  </div>
+  <div class="header-tags">
+    <div class="tag tag-cyan">PDE-Agent</div>
+    <div class="tag tag-emerald">CauchyNet</div>
+    <div class="tag tag-amber">O-PINN Ontology</div>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:8px;">
+      <div class="status-dot"></div>
+      <span style="font-size:10px;font-family:var(--font-mono);color:var(--emerald)">Online</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">场景选择</div>
+      <button class="scenario-btn active" onclick="selectScenario(0, this)">
+        <span class="s-icon">🌡️</span>
+        <span class="s-title">数据中心热管理</span>
+        <span class="s-desc">稳态热传导 · 散热器优化</span>
+      </button>
+      <button class="scenario-btn" onclick="selectScenario(1, this)">
+        <span class="s-icon">🛰️</span>
+        <span class="s-title">卫星热管理</span>
+        <span class="s-desc">瞬态热场 · 空间辐射 BC</span>
+      </button>
+      <button class="scenario-btn" onclick="selectScenario(2, this)">
+        <span class="s-icon">🔋</span>
+        <span class="s-title">电池热-电化学耦合</span>
+        <span class="s-desc">BMS · 储能热安全</span>
+      </button>
+    </div>
+    <div class="pipeline">
+      <div class="sidebar-label">求解管线</div>
+      <div class="pipeline-step" id="ps0">
+        <div class="step-dot" id="pd0">1</div>
+        <div class="step-info">
+          <div class="step-name" id="pn0">Planner LLM</div>
+          <div class="step-detail" id="pp0">等待输入...</div>
+        </div>
+      </div>
+      <div class="pipeline-step" id="ps1">
+        <div class="step-dot" id="pd1">2</div>
+        <div class="step-info">
+          <div class="step-name" id="pn1">Parser / Solver</div>
+          <div class="step-detail" id="pp1">热场参数提取</div>
+        </div>
+      </div>
+      <div class="pipeline-step" id="ps2">
+        <div class="step-dot" id="pd2">3</div>
+        <div class="step-info">
+          <div class="step-name" id="pn2">CauchyNet Init</div>
+          <div class="step-detail" id="pp2">宽浅网络配置</div>
+        </div>
+      </div>
+      <div class="pipeline-step" id="ps3">
+        <div class="step-dot" id="pd3">4</div>
+        <div class="step-info">
+          <div class="step-name" id="pn3">Adam Phase</div>
+          <div class="step-detail" id="pp3">一阶优化 · 粗收敛</div>
+        </div>
+      </div>
+      <div class="pipeline-step" id="ps4">
+        <div class="step-dot" id="pd4">5</div>
+        <div class="step-info">
+          <div class="step-name" id="pn4">L-BFGS Phase</div>
+          <div class="step-detail" id="pp4">高阶优化 · 精收敛</div>
+        </div>
+      </div>
+      <div class="pipeline-step" id="ps5">
+        <div class="step-dot" id="pd5">6</div>
+        <div class="step-info">
+          <div class="step-name" id="pn5">Orchestrator</div>
+          <div class="step-detail" id="pp5">结果验证 · 输出</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-area">
+    <div class="messages" id="messages">
+      <div class="welcome-text">
+        <strong>O-PINN Thermal Solver</strong><br>
+        用自然语言描述您的热仿真问题<br>
+        Agent 将自动调度 CauchyNet 求解器完成完整工作流<br>
+        <br>
+        <span style="font-size:11px;font-family:var(--font-mono);opacity:0.6">点击下方预设场景或直接输入 →</span>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-hints" id="hints">
+        <div class="hint-chip" onclick="fillHint(0)">📊 带相变的瞬态热传导</div>
+        <div class="hint-chip" onclick="fillHint(1)">🌊 对流换热系数 h=25 W/m²K</div>
+        <div class="hint-chip" onclick="fillHint(2)">⚡ 多物理耦合热-流分析</div>
+        <div class="hint-chip" onclick="fillHint(3)">🔍 参数扫描：导热系数敏感性</div>
+      </div>
+      <div class="input-row">
+        <textarea class="input-box" id="inputBox" placeholder="描述您的热仿真问题，例如：分析 GPU 散热片的稳态温度场，底面热流密度 80 W/cm²，顶部对流换热 h=20 W/m²K，环境温度 298K..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="right-panel">
+    <div class="panel-header">
+      <div class="panel-title">O-PINN 三内核状态</div>
+      <div class="panel-sub">Three-Kernel System · Ontology × PINN</div>
+    </div>
+    <div class="panel-body">
+      <div class="kernel-card" id="k0">
+        <div class="kernel-name">语义内核 · Semantic</div>
+        <div class="kernel-desc">OWL2-DL 热分析本体<br>工具元数据注册 · IOF标准</div>
+      </div>
+      <div class="kernel-card" id="k1">
+        <div class="kernel-name">约束内核 · Constraint</div>
+        <div class="kernel-desc">SHACL-SWRL 物理合法性<br>BC 参数自动验证</div>
+      </div>
+      <div class="kernel-card" id="k2">
+        <div class="kernel-name">行动内核 · Action</div>
+        <div class="kernel-desc">Agent+PINN Prog-Act<br>双循环训练调度</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div style="font-size:9px;font-family:var(--font-mono);color:var(--muted);letter-spacing:1px;margin-bottom:10px;">NETWORK CONFIG</div>
+      <div class="stat-row"><span class="stat-key">架构</span><span class="stat-val" id="s-arch">CauchyNet-Base</span></div>
+      <div class="stat-row"><span class="stat-key">层数</span><span class="stat-val" id="s-layers">5 layers</span></div>
+      <div class="stat-row"><span class="stat-key">宽度</span><span class="stat-val" id="s-width">256 neurons</span></div>
+      <div class="stat-row"><span class="stat-key">激活函数</span><span class="stat-val">Tanh + Swish</span></div>
+
+      <div class="divider"></div>
+      <div style="font-size:9px;font-family:var(--font-mono);color:var(--muted);letter-spacing:1px;margin-bottom:10px;">TRAINING STATUS</div>
+      <div class="stat-row"><span class="stat-key">Phase</span><span class="stat-val" id="s-phase">Idle</span></div>
+      <div class="stat-row"><span class="stat-key">Iterations</span><span class="stat-val" id="s-iter">—</span></div>
+      <div class="stat-row"><span class="stat-key">PDE Loss</span><span class="stat-val" id="s-loss">—</span></div>
+      <div class="stat-row"><span class="stat-key">BC Loss</span><span class="stat-val" id="s-bc">—</span></div>
+
+      <div class="divider"></div>
+      <svg class="loss-curve" id="lossCurve" viewBox="0 0 240 60">
+        <rect width="240" height="60" fill="rgba(0,0,0,0.2)" rx="4"/>
+        <text x="8" y="12" fill="#4a5a7a" font-size="8" font-family="JetBrains Mono">Loss Curve</text>
+        <path id="lossPath" d="" fill="none" stroke="var(--cyan)" stroke-width="1.5" opacity="0.8"/>
+        <path id="bcPath" d="" fill="none" stroke="var(--emerald)" stroke-width="1" opacity="0.6"/>
+      </svg>
+      <div style="display:flex;gap:12px;margin-top:4px;">
+        <span style="font-size:8px;font-family:var(--font-mono);color:var(--cyan)">— PDE Loss</span>
+        <span style="font-size:8px;font-family:var(--font-mono);color:var(--emerald)">— BC Loss</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const scenarios = [
+  {
+    prompt: "分析这个铜制散热器的稳态温度场。底面热流密度 q = 80 W/cm²（GPU 发热源），顶部翅片对流换热系数 h = 20 W/m²K，环境温度 T∞ = 298K，散热器尺寸 60mm × 40mm × 15mm。输出温度分布云图和最高温度预测。",
+    type: "数据中心热管理"
+  },
+  {
+    prompt: "模拟卫星太阳能电池板的瞬态热响应。阳照区太阳辐射 1361 W/m²，阴影区辐射为零，轨道周期 90 分钟，初始温度 250K，背面向深空辐射（ε=0.85）。求解 3 个完整轨道周期的温度历程。",
+    type: "卫星热管理"
+  },
+  {
+    prompt: "建立锂离子电池组的热-电化学耦合模型。单体电池 18650 型，额定容量 3Ah，2C 放电工况，环境温度 25°C，电池组 4S3P 排列，分析放电过程中最高温度和温度均匀性，评估热失控风险。",
+    type: "电池热-电化学耦合"
+  }
+];
+
+const hints = [
+  "分析带相变的二维瞬态热传导，材料铝，左边界 500K，右边界绝热，初温 300K，求解至 t=600s",
+  "散热翅片对流换热分析，翅片材料铜，h=25 W/m²K，基板热流 50 W/cm²，优化翅片间距",
+  "微通道液冷板多物理耦合，水流速 0.3 m/s，入口温度 293K，芯片热功耗 150W，输出压降和温升",
+  "导热系数参数扫描：分析 k 从 10 到 400 W/mK 区间内对热阻的影响，生成敏感性分析图表"
+];
+
+let currentScenario = 0;
+let solving = false;
+let lossData = [];
+let bcData = [];
+let animFrame = null;
+
+function selectScenario(idx, btn) {
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentScenario = idx;
+  document.getElementById('inputBox').value = scenarios[idx].prompt;
+}
+
+function fillHint(idx) {
+  document.getElementById('inputBox').value = hints[idx];
+}
+
+function addMessage(html, isUser) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg ${isUser ? 'user' : 'agent'}`;
+  const avatar = isUser
+    ? `<div class="msg-avatar">工</div>`
+    : `<div class="msg-avatar">∮</div>`;
+  div.innerHTML = `
+    ${avatar}
+    <div class="msg-content">
+      <div class="msg-bubble">${html}</div>
+    </div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function setPipeline(step, state) {
+  const dot = document.getElementById(`pd${step}`);
+  const name = document.getElementById(`pn${step}`);
+  dot.className = `step-dot ${state}`;
+  name.className = `step-name ${state}`;
+}
+
+function setPipelineDetail(step, text) {
+  document.getElementById(`pp${step}`).textContent = text;
+}
+
+function setKernel(idx, state) {
+  document.getElementById(`k${idx}`).className = `kernel-card ${state}`;
+}
+
+function updateStats(phase, iter, loss, bc) {
+  document.getElementById('s-phase').textContent = phase;
+  document.getElementById('s-iter').textContent = iter;
+  document.getElementById('s-loss').textContent = loss;
+  document.getElementById('s-bc').textContent = bc;
+}
+
+function drawLossCurve() {
+  if (lossData.length < 2) return;
+  const svg = document.getElementById('lossCurve');
+  const W = 240, H = 60, padL = 8, padR = 8, padT = 18, padB = 8;
+  const w = W - padL - padR;
+  const h = H - padT - padB;
+  const maxVal = Math.max(...lossData, ...bcData, 0.001);
+  const pts = (data) => data.map((v, i) => {
+    const x = padL + (i / (data.length - 1)) * w;
+    const y = padT + h - (Math.log10(v + 1e-10) / Math.log10(maxVal + 1e-10)) * h;
+    return `${x},${Math.max(padT, Math.min(H - padB, y))}`;
+  }).join(' ');
+  if (lossData.length > 1) {
+    document.getElementById('lossPath').setAttribute('d', 'M ' + pts(lossData).replace(/ /g, ' L ').replace('L ', ' ').replace('M ', 'M '));
+    document.getElementById('bcPath').setAttribute('d', bcData.length > 1 ? 'M ' + pts(bcData).replace(/ /g, ' L ').replace('L ', ' ').replace('M ', 'M ') : '');
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function typeText(el, text, speed = 18) {
+  for (let i = 0; i <= text.length; i++) {
+    el.innerHTML = text.slice(0, i) + '<span class="cursor"></span>';
+    await sleep(speed + Math.random() * 10);
+  }
+  el.innerHTML = text;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('inputBox');
+  const text = input.value.trim();
+  if (!text || solving) return;
+  solving = true;
+  document.getElementById('sendBtn').disabled = true;
+  input.value = '';
+
+  // Clear welcome text
+  const msgs = document.getElementById('messages');
+  const welcome = msgs.querySelector('.welcome-text');
+  if (welcome) welcome.remove();
+
+  // Reset pipeline
+  for (let i = 0; i < 6; i++) { setPipeline(i, ''); setPipelineDetail(i, '...');}
+  for (let i = 0; i < 3; i++) setKernel(i, '');
+  lossData = []; bcData = [];
+  updateStats('Idle', '—', '—', '—');
+  document.getElementById('lossPath').setAttribute('d', '');
+  document.getElementById('bcPath').setAttribute('d', '');
+
+  // User message
+  addMessage(text.replace(/\n/g, '<br>'), true);
+  await sleep(400);
+
+  // ===== STEP 1: Planner =====
+  setPipeline(0, 'active');
+  setPipelineDetail(0, '分析 PDE 类型...');
+  setKernel(0, 'active');
+
+  const planMsg = addMessage(`<span class="spinner"></span><span style="color:var(--cyan);font-size:12px;font-family:var(--font-mono)">Planner LLM 分析中...</span>`, false);
+  await sleep(1200);
+
+  const planContent = `<div class="thought-block thought-cyan">
+<div class="thought-label">🧠 Planner · 任务分解</div>
+PDE 类型识别: <strong>稳态热传导方程 (Laplace/Poisson)</strong><br>
+∇·(k∇T) + Q = 0<br>
+域: 三维矩形体 60×40×15 mm<br>
+BC类型: Neumann (热流) + Robin (对流) + 绝热<br>
+材料: 铜, k = 401 W/m·K<br>
+<br>
+子任务分解 → 6 steps: define_pde → define_domain → set_bc → create_cauchynet → run_optimizer → postprocess
+</div>`;
+
+  planMsg.querySelector('.msg-bubble').innerHTML = planContent;
+  setPipelineDetail(0, '任务分解完成 ✓');
+  setPipeline(0, 'done');
+  setKernel(0, 'done');
+  await sleep(600);
+
+  // ===== STEP 2: Parser =====
+  setPipeline(1, 'active');
+  setPipelineDetail(1, '提取热场参数...');
+  setKernel(1, 'active');
+  updateStats('Parsing', '—', '—', '—');
+
+  const parseMsg = addMessage(`<span class="spinner"></span><span style="color:var(--cyan);font-size:12px;font-family:var(--font-mono)">Parser 提取热场参数...</span>`, false);
+  await sleep(900);
+
+  parseMsg.querySelector('.msg-bubble').innerHTML = `
+<div class="thought-block thought-violet">
+<div class="thought-label">🔍 Parser · 参数结构化</div>
+q_base = 80 W/cm² = 800,000 W/m² ✓<br>
+h_conv = 20 W/m²K ✓<br>
+T_inf = 298 K ✓<br>
+k_Cu = 401 W/m·K [OWL本体查询: CopperMaterial]<br>
+几何: x∈[0,0.06], y∈[0,0.04], z∈[0,0.015] m<br>
+</div>
+<div class="thought-block thought-emerald">
+<div class="thought-label">✅ SHACL 约束内核验证</div>
+k > 0 ✓ · T_inf > 0 K ✓ · q > 0 ✓<br>
+BC 完整性检查: PASS · 物理合法性: PASS
+</div>`;
+  setPipelineDetail(1, 'SHACL 验证通过 ✓');
+  setPipeline(1, 'done');
+  setKernel(1, 'done');
+  await sleep(500);
+
+  // ===== STEP 3: CauchyNet Init =====
+  setPipeline(2, 'active');
+  setPipelineDetail(2, '初始化宽浅网络...');
+  setKernel(2, 'active');
+
+  const netMsg = addMessage(`<span class="spinner"></span><span style="color:var(--cyan);font-size:12px;font-family:var(--font-mono)">创建 CauchyNet 求解器...</span>`, false);
+  await sleep(800);
+
+  netMsg.querySelector('.msg-bubble').innerHTML = `
+<div class="thought-block thought-amber">
+<div class="thought-label">⚙️ CauchyNet · 网络配置</div>
+架构: Width-First PINN (Cauchy Integral Basis)<br>
+层数: 5 层 (避免深层梯度消失)<br>
+宽度: 256 neurons/layer<br>
+激活: Tanh (隐层) + Linear (输出层)<br>
+输入: [x, y, z] → 输出: T(x,y,z)<br>
+参数量: ~330K · 感受野覆盖全域
+</div>
+<div class="code-block">
+<div class="code-header"><span>Python · CauchyNet</span> cauchynet_thermal.py</div>
+<pre><span class="cm"># CauchyNet: width-first PINN solver</span>
+<span class="kw">net</span> = <span class="fn">CauchyNet</span>(
+  layers=[<span class="num">3</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">1</span>],
+  activation=<span class="str">'tanh'</span>,
+  cauchy_order=<span class="num">4</span>
+)
+<span class="cm"># Multi-objective loss</span>
+<span class="kw">loss</span> = (λ1·<span class="fn">L_pde</span>() + λ2·<span class="fn">L_bc_neumann</span>()
+      + λ3·<span class="fn">L_bc_robin</span>() + λ4·<span class="fn">L_data</span>())</pre>
+</div>`;
+
+  document.getElementById('s-layers').textContent = '5 layers';
+  document.getElementById('s-width').textContent = '256 neurons';
+  setPipelineDetail(2, 'CauchyNet 就绪 ✓');
+  setPipeline(2, 'done');
+  await sleep(500);
+
+  // ===== STEP 4: Adam Phase =====
+  setPipeline(3, 'active');
+  setPipelineDetail(3, 'Adam 一阶优化...');
+  updateStats('Adam (Phase 1)', '0', '—', '—');
+
+  const adamMsg = addMessage(`<div style="font-size:12px;font-family:var(--font-mono);color:var(--cyan);margin-bottom:10px;"><span class="spinner"></span>Phase 1 · Adam 优化器运行中...</div>
+<div class="progress-wrap">
+  <div class="progress-label"><span>Adam Iterations</span><span id="adamPct">0%</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="adamBar" style="width:0%;background:var(--cyan)"></div></div>
+</div>
+<div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-top:6px;" id="adamLog">lr=1e-3 · 多目标损失初始化...</div>`, false);
+
+  lossData = [];
+  bcData = [];
+
+  for (let i = 0; i <= 40; i++) {
+    await sleep(60);
+    const pct = Math.round(i / 40 * 100);
+    const bar = document.getElementById('adamBar');
+    const pctEl = document.getElementById('adamPct');
+    if (bar) bar.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct + '%';
+
+    const iter = i * 250;
+    const loss = 0.8 * Math.exp(-i * 0.08) + 0.02 * Math.random();
+    const bc = 0.3 * Math.exp(-i * 0.1) + 0.01 * Math.random();
+    lossData.push(loss);
+    bcData.push(bc);
+    drawLossCurve();
+
+    updateStats('Adam', iter.toString(), loss.toExponential(2), bc.toExponential(2));
+
+    const log = document.getElementById('adamLog');
+    if (log) {
+      if (i === 10) log.textContent = 'iter=2500 · 损失快速下降 · 逃离初始鞍点...';
+      if (i === 20) log.textContent = 'iter=5000 · 进入收敛盆地 · PDE残差 ↓';
+      if (i === 30) log.textContent = 'iter=7500 · Loss plateau 检测 → 准备切换 L-BFGS';
+      if (i === 40) log.textContent = 'iter=10000 · Adam 完成 · 触发 Phase 2';
+    }
+    setPipelineDetail(3, `iter=${iter} · loss=${loss.toExponential(1)}`);
+  }
+
+  adamMsg.querySelector('.msg-bubble').innerHTML += `
+<div class="thought-block thought-emerald" style="margin-top:10px">
+<div class="thought-label">✅ Adam Phase 完成</div>
+10,000 iterations · PDE Loss: 2.1e-2 → 3.4e-4<br>
+Loss plateau 触发 → 自动切换 L-BFGS<br>
+Resource Pool: 权重快照已保存 ✓
+</div>`;
+
+  setPipelineDetail(3, '10K iter · 粗收敛完成 ✓');
+  setPipeline(3, 'done');
+  await sleep(400);
+
+  // ===== STEP 5: L-BFGS Phase =====
+  setPipeline(4, 'active');
+  setPipelineDetail(4, 'L-BFGS 精收敛...');
+  updateStats('L-BFGS (Phase 2)', '10000', '3.4e-04', '—');
+
+  const lbfgsMsg = addMessage(`<div style="font-size:12px;font-family:var(--font-mono);color:var(--emerald);margin-bottom:10px;"><span class="spinner"></span>Phase 2 · L-BFGS 准牛顿优化...</div>
+<div class="progress-wrap">
+  <div class="progress-label"><span>L-BFGS Iterations</span><span id="lbfgsPct">0%</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="lbfgsBar" style="width:0%;background:var(--emerald)"></div></div>
+</div>
+<div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-top:6px;" id="lbfgsLog">利用 Hessian 曲率信息 · 精细收敛...</div>`, false);
+
+  for (let i = 0; i <= 30; i++) {
+    await sleep(80);
+    const pct = Math.round(i / 30 * 100);
+    const bar = document.getElementById('lbfgsBar');
+    const pctEl = document.getElementById('lbfgsPct');
+    if (bar) bar.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct + '%';
+
+    const iter = 10000 + i * 100;
+    const loss = 3.4e-4 * Math.exp(-i * 0.15) + 1e-6 * Math.random();
+    const bc = 1.2e-4 * Math.exp(-i * 0.18) + 5e-7 * Math.random();
+    lossData.push(loss);
+    bcData.push(bc);
+    drawLossCurve();
+
+    updateStats('L-BFGS', iter.toString(), loss.toExponential(2), bc.toExponential(2));
+    setPipelineDetail(4, `iter=${iter} · loss=${loss.toExponential(1)}`);
+
+    const log = document.getElementById('lbfgsLog');
+    if (log) {
+      if (i === 10) log.textContent = 'Hessian 近似收敛 · PDE 残差精细下降...';
+      if (i === 20) log.textContent = '收敛判据满足: |ΔL| < 1e-8 即将完成';
+    }
+  }
+
+  lbfgsMsg.querySelector('.msg-bubble').innerHTML += `
+<div class="thought-block thought-emerald" style="margin-top:10px">
+<div class="thought-label">✅ L-BFGS Phase 完成</div>
+3,000 iterations · PDE Loss: 3.4e-4 → <strong>8.7e-7</strong><br>
+BC Loss: 1.2e-4 → <strong>3.2e-8</strong> · 精度提升 3 个数量级<br>
+Orchestrator 验证: PASS ✓
+</div>`;
+
+  setPipelineDetail(4, '精收敛完成 ✓ 8.7e-7');
+  setPipeline(4, 'done');
+  updateStats('Converged', '13000', '8.7e-07', '3.2e-08');
+  await sleep(500);
+
+  // ===== STEP 6: Results =====
+  setPipeline(5, 'active');
+  setPipelineDetail(5, '生成结果报告...');
+
+  // Heatmap
+  const resultMsg = addMessage(`<div style="color:var(--emerald);font-size:12px;font-family:var(--font-mono);font-weight:600;margin-bottom:12px;">✅ 求解完成 · 结果输出</div>
+<div class="heatmap-container">
+  <div class="heatmap-header">
+    <div class="dot" style="background:var(--rose)"></div>
+    <div class="dot" style="background:var(--amber)"></div>
+    <div class="dot" style="background:var(--cyan)"></div>
+    <span>温度场云图 T(x,y) · 截面 z=7.5mm</span>
+  </div>
+  <div class="heatmap-body">
+    <canvas id="heatCanvas" width="400" height="140"></canvas>
+  </div>
+</div>
+<div class="metrics">
+  <div class="metric" style="color:var(--rose);border-color:rgba(255,77,109,0.3);background:rgba(255,77,109,0.08)">
+    <div class="metric-label">T_max</div>
+    <div class="metric-value">381.4 K</div>
+  </div>
+  <div class="metric" style="color:var(--cyan);border-color:rgba(0,212,255,0.3);background:var(--cyan-dim)">
+    <div class="metric-label">T_min</div>
+    <div class="metric-value">298.0 K</div>
+  </div>
+  <div class="metric" style="color:var(--amber);border-color:rgba(255,184,0,0.3);background:var(--amber-dim)">
+    <div class="metric-label">ΔT</div>
+    <div class="metric-value">83.4 K</div>
+  </div>
+  <div class="metric" style="color:var(--emerald);border-color:rgba(0,255,157,0.3);background:var(--emerald-dim)">
+    <div class="metric-label">PDE Residual</div>
+    <div class="metric-value">8.7e-7</div>
+  </div>
+</div>
+<div class="thought-block thought-cyan" style="margin-top:10px">
+<div class="thought-label">🧠 Orchestrator · 物理验证</div>
+热流守恒检查: Q_in = 192W, Q_out = 191.8W (误差 0.1%) ✓<br>
+温度合理性: T_max = 108°C < 铜熔点 1084°C ✓<br>
+翅片效率 η = 0.87 · 建议优化翅片间距提升至 0.91<br>
+</div>
+<div style="font-size:11px;color:var(--muted);font-family:var(--font-mono);margin-top:8px;padding:8px 10px;background:rgba(0,0,0,0.2);border-radius:6px;">
+📁 导出: temperature_field.vtk · heatmap.png · report.pdf · cauchynet_weights.pt
+</div>`, false);
+
+  // Draw heatmap
+  await sleep(100);
+  const canvas = document.getElementById('heatCanvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    for (let x = 0; x < W; x++) {
+      for (let y = 0; y < H; y++) {
+        const nx = x / W, ny = y / H;
+        // Simulate: heat source at bottom center, cooling at top
+        const heat = 0.85 * Math.exp(-10 * ((nx - 0.5) ** 2 + (ny - 1) ** 2))
+                   + 0.3 * Math.exp(-8 * ((nx - 0.3) ** 2 + (ny - 0.9) ** 2));
+        const t = Math.max(0, Math.min(1, heat + 0.05 * Math.sin(nx * Math.PI * 4) * (1 - ny)));
+        // Color map: blue → cyan → green → yellow → red
+        let r, g, b;
+        if (t < 0.25) { r = 0; g = Math.round(t * 4 * 200); b = 255; }
+        else if (t < 0.5) { r = 0; g = 200; b = Math.round((1 - (t - 0.25) * 4) * 255); }
+        else if (t < 0.75) { r = Math.round((t - 0.5) * 4 * 255); g = 200; b = 0; }
+        else { r = 255; g = Math.round((1 - (t - 0.75) * 4) * 180); b = 0; }
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+    // Add colorbar
+    const barH = 10, barW = 200, barX = (W - barW) / 2, barY = H - 20;
+    for (let i = 0; i < barW; i++) {
+      const t = i / barW;
+      let r, g, b;
+      if (t < 0.25) { r = 0; g = Math.round(t * 4 * 200); b = 255; }
+      else if (t < 0.5) { r = 0; g = 200; b = Math.round((1 - (t - 0.25) * 4) * 255); }
+      else if (t < 0.75) { r = Math.round((t - 0.5) * 4 * 255); g = 200; b = 0; }
+      else { r = 255; g = Math.round((1 - (t - 0.75) * 4) * 180); b = 0; }
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(barX + i, barY, 1, barH);
+    }
+    ctx.fillStyle = 'white';
+    ctx.font = '9px JetBrains Mono';
+    ctx.textAlign = 'left';
+    ctx.fillText('298K', barX, barY + barH + 10);
+    ctx.textAlign = 'right';
+    ctx.fillText('381K', barX + barW, barY + barH + 10);
+    // Axis labels
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillText('x →', W - 20, H - 28);
+    ctx.save();
+    ctx.translate(12, H / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('z ↑', 0, 0);
+    ctx.restore();
+  }
+
+  setPipelineDetail(5, '完成 · T_max=381.4K');
+  setPipeline(5, 'done');
+  setKernel(2, 'done');
+  await sleep(200);
+
+  solving = false;
+  document.getElementById('sendBtn').disabled = false;
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// Auto-start with first scenario
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('inputBox').value = scenarios[0].prompt;
+  // Auto trigger on load after short delay
+  setTimeout(() => { sendMessage(); }, 800);
+});
+
+// Enter key
+document.getElementById('inputBox').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+</script>
+</body>
+</html>

@@ -3,9 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CauchyX AI</title>
+<title>CauchyX AI — Physics-Informed Neural Networks for Industrial AI</title>
+
+<!-- SEO -->
+<meta name="description" content="CauchyX builds physics-informed neural networks grounded in Cauchy's integral theorem — making AI inference 10,000× faster than CFD, auditable, and uncertainty-quantified for industrial systems.">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://dongpu-zhang.github.io/cauchyx-ai/">
+<meta property="og:title" content="CauchyX AI — Physics-Informed Neural Networks">
+<meta property="og:description" content="The reasoning layer between physics and AI decisions. 10,000× faster than CFD with 100% auditable reasoning chains.">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@cauchyx">
+<meta name="twitter:title" content="CauchyX AI — Physics-Informed Neural Networks">
+<meta name="twitter:description" content="The reasoning layer between physics and AI decisions. 10,000× faster than CFD.">
+
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+
 <style>
   :root {
     --bg:      #08090d;
@@ -63,7 +83,39 @@
     font-family: var(--mono);
     color: var(--muted);
   }
-  .nav-links a:hover { color: var(--text); transition: color 0.15s; }
+  .nav-links a { transition: color 0.15s; }
+  .nav-links a:hover,
+  .nav-links a.active { color: var(--text); }
+
+  /* ─── HAMBURGER ───────────────────────────────────────── */
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    transition: background 0.15s;
+  }
+  .nav-toggle:hover { background: rgba(255,255,255,0.05); }
+  .nav-toggle span {
+    display: block;
+    width: 20px;
+    height: 1.5px;
+    background: var(--muted);
+    border-radius: 1px;
+    transition: transform 0.25s ease, opacity 0.2s ease, background 0.15s;
+  }
+  .nav-toggle.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; }
+  .nav-toggle.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+  .nav-toggle.open span { background: var(--text); }
 
   /* ─── HERO ────────────────────────────────────────────── */
   .hero {
@@ -143,7 +195,13 @@
     transition: color 0.15s, border-color 0.15s;
   }
   .btn-ghost:hover { color: var(--text); border-color: #3a3d4a; }
-  .btn-disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+
+  /* aria-disabled button */
+  .btn-ghost[aria-disabled="true"] {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+  }
 
   /* ─── DIVIDER ─────────────────────────────────────────── */
   .sep {
@@ -237,9 +295,9 @@
     margin-right: 0.4rem;
     margin-top: 0.6rem;
   }
-  .tag-cyan  { background: rgba(0,204,238,0.08); color: var(--cyan);   border: 1px solid rgba(0,204,238,0.2); }
-  .tag-purple{ background: rgba(139,92,246,0.08); color: var(--purple); border: 1px solid rgba(139,92,246,0.2); }
-  .tag-gold  { background: rgba(212,160,23,0.08); color: var(--gold);   border: 1px solid rgba(212,160,23,0.2); }
+  .tag-cyan   { background: rgba(0,204,238,0.08);   color: var(--cyan);   border: 1px solid rgba(0,204,238,0.2); }
+  .tag-purple { background: rgba(139,92,246,0.08);  color: var(--purple); border: 1px solid rgba(139,92,246,0.2); }
+  .tag-gold   { background: rgba(212,160,23,0.08);  color: var(--gold);   border: 1px solid rgba(212,160,23,0.2); }
 
   /* ─── METRICS ─────────────────────────────────────────── */
   .metrics {
@@ -282,12 +340,11 @@
     max-width: 580px;
   }
 
-
   .founder {
     border-top: 2px solid var(--border);
     padding-top: 1.75rem;
   }
-  .founder.primary { border-top-color: var(--gold); }
+  .founder.primary   { border-top-color: var(--gold); }
   .founder.secondary { border-top-color: var(--purple); }
 
   .founder-name {
@@ -352,7 +409,7 @@
     color: #9ca3af;
     vertical-align: middle;
   }
-  td.hl { color: var(--text); font-weight: 500; }
+  td.hl   { color: var(--text); font-weight: 500; }
   td.good { color: #4ade80; }
   td.bad  { color: #4b5563; }
   tr:last-child td { border-bottom: none; }
@@ -366,7 +423,6 @@
     gap: 1.5rem;
     margin-top: 1rem;
   }
-  @media (max-width: 640px) { .market-grid { grid-template-columns: 1fr; } }
   .market-card {
     border: 1px solid var(--border);
     padding: 1.5rem;
@@ -444,6 +500,7 @@
     color: var(--cyan);
     border-bottom: 1px solid rgba(0,204,238,0.3);
     padding-bottom: 1px;
+    transition: border-color 0.15s;
   }
   .contact-email:hover { border-bottom-color: var(--cyan); }
 
@@ -469,7 +526,7 @@
     color: var(--muted);
     letter-spacing: 0.04em;
   }
-  .footer-links a:hover { color: var(--text); }
+  .footer-links a:hover { color: var(--text); transition: color 0.15s; }
 
   /* ─── PHYSICS BG ──────────────────────────────────────── */
   .field-canvas {
@@ -498,15 +555,6 @@
     transform: translateY(0);
   }
 
-  /* ─── RESPONSIVE ──────────────────────────────────────── */
-  @media (max-width: 640px) {
-    nav { padding: 0 1.5rem; }
-    .hero, section { padding-left: 1.5rem; padding-right: 1.5rem; }
-    .metrics { grid-template-columns: 1fr; }
-    .nav-links { gap: 1.5rem; }
-    footer { flex-direction: column; gap: 1rem; padding: 1.5rem; }
-  }
-
   /* ─── ARCH DIAGRAM ────────────────────────────────────── */
   .arch-diagram {
     margin-bottom: 2.5rem;
@@ -514,11 +562,373 @@
     border-radius: 6px;
     padding: 1.5rem 1rem 0.5rem;
     background: var(--bg2);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .arch-diagram svg {
     width: 100%;
     height: auto;
     display: block;
+    min-width: 480px;
+  }
+
+  /* ─── RESEARCH FIGURE (light-bg academic figure) ─────── */
+  .research-figure-wrap {
+    margin-top: 3.5rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--border);
+  }
+  .research-figure-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .research-figure-title {
+    font-size: 1.1rem;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+  .research-figure-inner {
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #d0d5e0;
+    padding: 1.5rem 1.5rem 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .research-figure-inner svg {
+    display: block;
+    min-width: 600px;
+    width: 100%;
+    height: auto;
+  }
+  .figure-caption {
+    font-size: 0.8rem;
+    color: #444;
+    line-height: 1.72;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #ddd;
+  }
+  .figure-caption b { font-weight: 700; color: #111; }
+
+  /* ─── BACK TO TOP ─────────────────────────────────────── */
+  .back-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 36px;
+    height: 36px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, background 0.15s;
+    z-index: 50;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .back-to-top.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .back-to-top:hover {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  /* ─── RESPONSIVE ──────────────────────────────────────── */
+  @media (max-width: 640px) {
+    nav { padding: 0 1.5rem; }
+    .hero, section { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .metrics { grid-template-columns: 1fr; }
+    .market-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 1rem; padding: 1.5rem; }
+    .back-to-top { bottom: 1.25rem; right: 1.25rem; }
+
+    /* Mobile nav */
+    .nav-toggle { display: flex; }
+    .nav-links {
+      position: fixed;
+      top: 56px; left: 0; right: 0;
+      flex-direction: column;
+      gap: 0;
+      background: rgba(8,9,13,0.97);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 0 1rem;
+      transform: translateY(-110%);
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+    .nav-links.open {
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .nav-links li { border-bottom: 1px solid var(--border); }
+    .nav-links li:last-child { border-bottom: none; }
+    .nav-links a {
+      display: block;
+      padding: 0.9rem 1.5rem;
+      font-size: 0.9rem;
+    }
+  }
+
+  /* ─── NAV DEMO HIGHLIGHT ──────────────────────────────── */
+  .nav-demo-link {
+    color: var(--cyan) !important;
+    font-weight: 500;
+  }
+  .nav-demo-link:hover { opacity: 0.8; }
+
+  /* ─── DEMO SECTION CARD ───────────────────────────────── */
+  .demo-card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg2);
+    overflow: hidden;
+    border-top: 2px solid var(--cyan);
+    transition: border-color 0.15s;
+  }
+  .demo-card:hover { border-top-color: var(--cyan); border-color: #2e3347; }
+  .demo-card-content {
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .demo-card-title {
+    font-size: 1.05rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.35rem;
+  }
+  .demo-card-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .demo-card-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .demo-card-actions { display: flex; gap: 0.75rem; flex-shrink: 0; flex-wrap: wrap; }
+
+  .demo-lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    text-align: left;
+    min-width: 148px;
+  }
+  .demo-lang-btn:hover { background: var(--bg2); border-color: #3a3d4a; }
+  .demo-lang-cn:hover { border-color: rgba(0,204,238,0.4); }
+  .demo-lang-en:hover { border-color: rgba(139,92,246,0.4); }
+  .demo-lang-flag { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
+  .demo-lang-primary {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.03em;
+  }
+  .demo-lang-sub {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  /* ─── DEMO MODAL OVERLAY ──────────────────────────────── */
+  .dm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(4, 5, 9, 0.82);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+  .dm-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ─── DEMO MODAL BOX ──────────────────────────────────── */
+  .dm-box {
+    position: relative;
+    background: var(--bg2);
+    border: 1px solid #2a2f42;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2.5rem 2.5rem 2rem;
+    transform: translateY(20px);
+    transition: transform 0.22s ease;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+  .dm-overlay.open .dm-box { transform: translateY(0); }
+
+  .dm-close {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 30px; height: 30px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .dm-close:hover { color: var(--text); border-color: #3a3d4a; }
+
+  .dm-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+  .dm-title {
+    font-size: 1.35rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .dm-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.2rem;
+    line-height: 1.6;
+  }
+  .dm-desc-en {
+    font-size: 0.8rem;
+    color: #4b5563;
+    margin-bottom: 1.75rem;
+    line-height: 1.6;
+  }
+
+  /* ─── FORM GRID ───────────────────────────────────────── */
+  .dm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .dm-field { display: flex; flex-direction: column; gap: 0.35rem; }
+  .dm-field-full { grid-column: 1 / -1; }
+
+  .dm-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .dm-req { color: var(--cyan); margin-left: 1px; }
+  .dm-optional { font-size: 0.65rem; color: #4b5563; letter-spacing: 0.04em; font-style: italic; }
+
+  .dm-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.875rem;
+    padding: 0.55rem 0.75rem;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .dm-input::placeholder { color: #3a3d4a; }
+  .dm-input:focus { border-color: rgba(0,204,238,0.45); }
+  .dm-input.invalid { border-color: #dc2626; }
+
+  .dm-err {
+    font-size: 0.72rem;
+    color: #dc2626;
+    min-height: 1rem;
+    font-family: var(--mono);
+  }
+
+  .dm-note {
+    font-size: 0.75rem;
+    color: #374151;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  /* ─── DEMO MODAL ACTION BUTTONS ───────────────────────── */
+  .dm-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .dm-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+  }
+  .dm-btn-flag { font-size: 1.1rem; }
+  .dm-btn-cn {
+    background: rgba(0,204,238,0.06);
+    color: var(--cyan);
+    border-color: rgba(0,204,238,0.2);
+  }
+  .dm-btn-cn:hover { background: rgba(0,204,238,0.12); border-color: rgba(0,204,238,0.4); }
+  .dm-btn-en {
+    background: rgba(139,92,246,0.06);
+    color: var(--purple);
+    border-color: rgba(139,92,246,0.2);
+  }
+  .dm-btn-en:hover { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.4); }
+
+  @media (max-width: 640px) {
+    .dm-box { padding: 2rem 1.25rem 1.5rem; }
+    .dm-grid { grid-template-columns: 1fr; }
+    .dm-actions { flex-direction: column; }
+    .demo-card-content { flex-direction: column; }
+    .demo-card-actions { width: 100%; }
+    .demo-lang-btn { flex: 1; }
+    .btn-demo-trigger { display: none; }
   }
 </style>
 </head>
@@ -530,19 +940,25 @@
 <div class="content">
 
 <!-- ── NAV ──────────────────────────────────────────────── -->
-<nav>
-  <a href="#" class="nav-logo">Cauchy<span>X</span></a>
-  <ul class="nav-links">
+<nav aria-label="Main navigation">
+  <a href="#" class="nav-logo" aria-label="CauchyX AI home">Cauchy<span>X</span></a>
+  <ul class="nav-links" id="nav-links" role="list">
     <li><a href="#research">Research</a></li>
     <li><a href="#founders">Founders</a></li>
     <li><a href="#market">Market</a></li>
     <li><a href="#contact">Contact</a></li>
+    <li><a href="#demo" class="nav-demo-link">Demo</a></li>
   </ul>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
 </nav>
 
 <!-- ── HERO ──────────────────────────────────────────────── -->
-<section class="hero">
-  <p class="hero-tag">Physics AI · San Francisco, CA</p>
+<section class="hero" aria-label="Introduction">
+  <p class="hero-tag">Physics AI · Santa Clara, CA</p>
   <h1>
     The reasoning layer between<br>
     <em>physics</em> and AI decisions.
@@ -555,7 +971,8 @@
   </p>
   <div class="hero-links">
     <a href="#contact" class="btn-primary">Request PoC</a>
-    <span class="btn-ghost btn-disabled" title="Preprint in preparation">arXiv Preprint — In preparation</span>
+    <button class="btn-ghost btn-demo-trigger" onclick="openDemoModal()" type="button">▶ Live Demo</button>
+    <button class="btn-ghost" aria-disabled="true" title="Preprint in preparation">arXiv Preprint — In preparation</button>
     <a href="#research" class="btn-ghost">Architecture</a>
   </div>
 </section>
@@ -575,7 +992,6 @@
       This is not a constraint on the model — it is the source of its value.
     </p>
   </div>
-
 
   <!-- ── O-PINN Architecture Diagram ───────────────────────── -->
   <div class="arch-diagram reveal" aria-label="O-PINN three-layer architecture diagram">
@@ -599,21 +1015,6 @@
         </marker>
       </defs>
 
-      <!--
-        Layout plan:
-          Layer boxes  : x=20  w=600  (x=20..620)  center-x=320
-          Callout col  : x=648 w=212  (x=648..860)
-          Divider line : x=636
-
-          Input pills (3) evenly spaced across layer box width:
-            Pill A center=115  Pill B center=320  Pill C center=525
-            Pill A: x=20  w=190
-            Pill B: x=225 w=190
-            Pill C: x=430 w=190
-
-          All vertical connector lines run at x=320 (box center)
-      -->
-
       <!-- ── INPUT PILLS ───────────────────────────────────── -->
       <rect x="20"  y="16" width="190" height="34" rx="4"
             fill="#0e1018" stroke="#1c1f2b" stroke-width="1"/>
@@ -631,13 +1032,10 @@
             font-family="'DM Mono',monospace" font-size="11" fill="#6b7280">CAD / PDM</text>
 
       <!-- ── INPUT CONNECTORS ──────────────────────────────── -->
-      <!-- Three drops to collection line -->
       <line x1="115" y1="50" x2="115" y2="72" stroke="#3a4155" stroke-width="1"/>
       <line x1="320" y1="50" x2="320" y2="72" stroke="#3a4155" stroke-width="1"/>
       <line x1="525" y1="50" x2="525" y2="72" stroke="#3a4155" stroke-width="1"/>
-      <!-- Horizontal collection bar -->
       <line x1="115" y1="72" x2="525" y2="72" stroke="#3a4155" stroke-width="1"/>
-      <!-- Single central drop into layer 01 -->
       <line x1="320" y1="72" x2="320" y2="96" stroke="#3a4155" stroke-width="1" marker-end="url(#arr)"/>
 
       <!-- ── LAYER 01: CauchyNet ─────────────────────────── -->
@@ -737,44 +1135,35 @@
             font-family="'DM Mono',monospace" font-size="10" fill="#4b5563">
         Decision + Full Reasoning Trace</text>
 
-      <!-- ── CALLOUT COLUMN (fully outside boxes) ────────── -->
-      <!-- Vertical divider -->
-      <line x1="636" y1="98" x2="636" y2="402"
-            stroke="#1c1f2b" stroke-width="1"/>
+      <!-- ── CALLOUT COLUMN ────────────────────────────────── -->
+      <line x1="636" y1="98" x2="636" y2="402" stroke="#1c1f2b" stroke-width="1"/>
 
-      <!-- Callout 01: speed -->
       <rect x="648" y="106" width="220" height="68" rx="4"
             fill="#041418" stroke="rgba(0,204,238,.18)" stroke-width=".8"/>
       <text x="758" y="133" text-anchor="middle" dominant-baseline="central"
-            font-family="'DM Mono',monospace" font-size="22" fill="#00ccee"
-            font-weight="500">10,000×</text>
+            font-family="'DM Mono',monospace" font-size="22" fill="#00ccee" font-weight="500">10,000×</text>
       <text x="758" y="158" text-anchor="middle" dominant-baseline="central"
             font-family="'DM Mono',monospace" font-size="9" fill="#6b7280">faster than CFD</text>
 
-      <!-- Callout 02: chain -->
       <rect x="648" y="216" width="220" height="68" rx="4"
             fill="#0c0718" stroke="rgba(139,92,246,.18)" stroke-width=".8"/>
       <text x="758" y="243" text-anchor="middle" dominant-baseline="central"
-            font-family="'DM Mono',monospace" font-size="22" fill="#8b5cf6"
-            font-weight="500">100%</text>
+            font-family="'DM Mono',monospace" font-size="22" fill="#8b5cf6" font-weight="500">100%</text>
       <text x="758" y="268" text-anchor="middle" dominant-baseline="central"
             font-family="'DM Mono',monospace" font-size="9" fill="#6b7280">auditable chain</text>
 
-      <!-- Callout 03: cost -->
       <rect x="648" y="326" width="220" height="68" rx="4"
             fill="#110e04" stroke="rgba(212,160,23,.18)" stroke-width=".8"/>
       <text x="758" y="353" text-anchor="middle" dominant-baseline="central"
-            font-family="'DM Mono',monospace" font-size="22" fill="#d4a017"
-            font-weight="500">$0.04</text>
+            font-family="'DM Mono',monospace" font-size="22" fill="#d4a017" font-weight="500">$0.04</text>
       <text x="758" y="378" text-anchor="middle" dominant-baseline="central"
             font-family="'DM Mono',monospace" font-size="9" fill="#6b7280">per inference run</text>
-
     </svg>
   </div>
 
   <div class="layers reveal">
     <div class="layer">
-      <span class="layer-num">01</span>
+      <span class="layer-num" aria-hidden="true">01</span>
       <div>
         <p class="layer-title">CauchyNet / Xnet — Physics Inference Layer</p>
         <p class="layer-desc">
@@ -790,7 +1179,7 @@
       </div>
     </div>
     <div class="layer">
-      <span class="layer-num">02</span>
+      <span class="layer-num" aria-hidden="true">02</span>
       <div>
         <p class="layer-title">Domain Ontology — Semantic Constraint Layer</p>
         <p class="layer-desc">
@@ -806,7 +1195,7 @@
       </div>
     </div>
     <div class="layer">
-      <span class="layer-num">03</span>
+      <span class="layer-num" aria-hidden="true">03</span>
       <div>
         <p class="layer-title">LLM Agent — Auditable Decision Interface</p>
         <p class="layer-desc">
@@ -823,16 +1212,242 @@
     </div>
   </div>
 
-  <div class="metrics reveal">
-    <div class="metric">
+  <!-- ── LANG-PINN Research Figure ──────────────────────── -->
+  <div class="research-figure-wrap reveal">
+    <p class="research-figure-label">Research Figure</p>
+    <p class="research-figure-title">Lang-PINN System Architecture</p>
+    <div class="research-figure-inner" aria-label="Lang-PINN system architecture diagram with three zones: core pipeline, candidate architectures, and mathematical foundations">
+      <svg width="858" height="578" viewBox="0 0 858 578" xmlns="http://www.w3.org/2000/svg" role="img"
+           aria-label="Lang-PINN architecture diagram showing multi-agent orchestration of PINN architectures grounded in Cauchy integral theory">
+        <defs>
+          <marker id="lp-arr" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M1 1.5L9 5L1 8.5" fill="none" stroke="context-stroke"
+                  stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+          <marker id="lp-arrs" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+            <path d="M1 1.5L9 5L1 8.5" fill="none" stroke="context-stroke"
+                  stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- ZONE A -->
+        <rect x="16" y="16" width="826" height="242" rx="10"
+              fill="#F3F7FD" stroke="#8AAED2" stroke-width="0.8"/>
+        <rect x="16" y="16" width="36" height="24" rx="6" fill="#1E5FA0"/>
+        <rect x="34" y="16" width="18" height="24" fill="#1E5FA0"/>
+        <text x="34" y="32" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#fff" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">A</text>
+        <text x="62" y="32" font-size="11" font-weight="600" fill="#1E5FA0"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">Lang-PINN 核心流程</text>
+
+        <rect x="34" y="80" width="112" height="68" rx="7"
+              fill="#EBEBEB" stroke="#9A9A9A" stroke-width="0.8"/>
+        <text x="90" y="107" text-anchor="middle" font-size="11" font-weight="600"
+              fill="#333" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">用户输入</text>
+        <text x="90" y="125" text-anchor="middle" font-size="9.5" fill="#666"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">自然语言描述</text>
+
+        <rect x="168" y="80" width="144" height="68" rx="7"
+              fill="#E2EDF8" stroke="#1E5FA0" stroke-width="1.2"/>
+        <text x="240" y="103" text-anchor="middle" font-size="11" font-weight="700"
+              fill="#163F74" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">① PDE Agent</text>
+        <text x="240" y="120" text-anchor="middle" font-size="9.5" fill="#1E5FA0"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">解析为符号 PDE</text>
+        <text x="240" y="136" text-anchor="middle" font-size="8.5" fill="#4A80BB"
+              font-style="italic" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">周期 · 几何 · 多尺度特征</text>
+
+        <rect x="334" y="80" width="154" height="68" rx="7"
+              fill="#E2EDF8" stroke="#1E5FA0" stroke-width="1.2"/>
+        <text x="411" y="103" text-anchor="middle" font-size="11" font-weight="700"
+              fill="#163F74" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">② PINN Agent</text>
+        <text x="411" y="120" text-anchor="middle" font-size="9.5" fill="#1E5FA0"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">选择最优求解架构</text>
+
+        <rect x="512" y="80" width="144" height="68" rx="7"
+              fill="#DCF0E8" stroke="#1A7048" stroke-width="1.2"/>
+        <text x="584" y="103" text-anchor="middle" font-size="11" font-weight="700"
+              fill="#0E4D2C" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">③ Code Agent</text>
+        <text x="584" y="120" text-anchor="middle" font-size="9.5" fill="#1A7048"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">生成模块化求解代码</text>
+
+        <rect x="688" y="80" width="144" height="68" rx="7"
+              fill="#FDEEE4" stroke="#C04820" stroke-width="1.2"/>
+        <text x="760" y="100" text-anchor="middle" font-size="11" font-weight="700"
+              fill="#8C2E0E" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">④ Feedback Agent</text>
+        <text x="760" y="117" text-anchor="middle" font-size="9.5" fill="#C04820"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">执行 · 评估 · 优化</text>
+        <text x="760" y="134" text-anchor="middle" font-size="8.5" fill="#C04820"
+              font-style="italic" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">误差 · 收敛 · 性能指标</text>
+
+        <!-- Forward arrows -->
+        <line x1="146" y1="114" x2="166" y2="114" stroke="#555" stroke-width="1.3" marker-end="url(#lp-arr)"/>
+        <line x1="312" y1="114" x2="332" y2="114" stroke="#555" stroke-width="1.3" marker-end="url(#lp-arr)"/>
+        <line x1="488" y1="114" x2="510" y2="114" stroke="#555" stroke-width="1.3" marker-end="url(#lp-arr)"/>
+        <line x1="656" y1="114" x2="686" y2="114" stroke="#555" stroke-width="1.3" marker-end="url(#lp-arr)"/>
+
+        <!-- Feedback arcs -->
+        <path d="M760,148 C760,170 584,170 584,148"
+              fill="none" stroke="#C04820" stroke-width="1.1" marker-end="url(#lp-arrs)"/>
+        <text x="672" y="182" text-anchor="middle" font-size="8.5" fill="#C04820"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">反馈信号</text>
+
+        <path d="M760,80 C760,54 411,54 411,80"
+              fill="none" stroke="#C04820" stroke-width="0.9"
+              stroke-dasharray="4 3" marker-end="url(#lp-arrs)"/>
+        <path d="M760,80 C760,40 240,40 240,80"
+              fill="none" stroke="#C04820" stroke-width="0.9"
+              stroke-dasharray="4 3" marker-end="url(#lp-arrs)"/>
+        <text x="500" y="47" text-anchor="middle" font-size="8.5" fill="#C04820"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">性能数据</text>
+
+        <!-- Mini legend -->
+        <text x="634" y="208" font-size="8.5" fill="#555"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">实线 ──→  数据 / 代码流</text>
+        <text x="634" y="224" font-size="8.5" fill="#555"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">虚线 – –→  选择 / 引用关系</text>
+        <text x="634" y="240" font-size="8.5" fill="#555"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">粗边框 = 本工作原创架构</text>
+
+        <!-- Cross-zone arrows -->
+        <path d="M378,148 Q320,208 270,270"
+              fill="none" stroke="#5E38A0" stroke-width="1.1"
+              stroke-dasharray="5 3.5" marker-end="url(#lp-arr)"/>
+        <text x="352" y="210" font-size="8.5" fill="#5E38A0"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">架构选择</text>
+
+        <line x1="524" y1="270" x2="524" y2="148" stroke="#1A7048" stroke-width="1.4" marker-end="url(#lp-arr)"/>
+        <text x="540" y="218" font-size="8.5" fill="#1A7048"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">注入</text>
+        <text x="540" y="231" font-size="8.5" fill="#1A7048"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">选定架构</text>
+
+        <line x1="530" y1="412" x2="550" y2="412" stroke="#906A00" stroke-width="0.9"
+              stroke-dasharray="4 3" marker-end="url(#lp-arrs)"/>
+        <text x="540" y="406" text-anchor="middle" font-size="7.5" fill="#906A00"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">理论</text>
+        <text x="540" y="420" text-anchor="middle" font-size="7.5" fill="#906A00"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">根基</text>
+
+        <!-- ZONE B -->
+        <rect x="16" y="270" width="514" height="292" rx="10"
+              fill="#F5F0FC" stroke="#B0A0DC" stroke-width="0.8"/>
+        <rect x="16" y="270" width="36" height="24" rx="6" fill="#5E38A0"/>
+        <rect x="34" y="270" width="18" height="24" fill="#5E38A0"/>
+        <text x="34" y="286" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#fff" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">B</text>
+        <text x="62" y="286" font-size="11" font-weight="600" fill="#5E38A0"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">候选架构库（PINN Agent 管理）</text>
+
+        <rect x="36" y="306" width="138" height="58" rx="7"
+              fill="#ECE6F8" stroke="#6B3FA8" stroke-width="0.9"/>
+        <text x="105" y="330" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">MLP</text>
+        <text x="105" y="350" text-anchor="middle" font-size="9" fill="#6B3FA8"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">标准多层感知机</text>
+
+        <rect x="192" y="306" width="138" height="58" rx="7"
+              fill="#ECE6F8" stroke="#6B3FA8" stroke-width="0.9"/>
+        <text x="261" y="330" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">KAN</text>
+        <text x="261" y="350" text-anchor="middle" font-size="9" fill="#6B3FA8"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">柯尔莫哥洛夫-阿诺德网络</text>
+
+        <rect x="348" y="306" width="162" height="58" rx="7"
+              fill="#ECE6F8" stroke="#6B3FA8" stroke-width="0.9"/>
+        <text x="429" y="330" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">Transformer</text>
+        <text x="429" y="350" text-anchor="middle" font-size="9" fill="#6B3FA8"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">基于自注意力机制</text>
+
+        <rect x="36" y="388" width="138" height="58" rx="7"
+              fill="#ECE6F8" stroke="#6B3FA8" stroke-width="0.9"/>
+        <text x="105" y="412" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">CNN</text>
+        <text x="105" y="432" text-anchor="middle" font-size="9" fill="#6B3FA8"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">卷积神经网络</text>
+
+        <rect x="192" y="388" width="138" height="58" rx="7"
+              fill="#E8DFF6" stroke="#5E38A0" stroke-width="2"/>
+        <text x="261" y="412" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">CauchyNet</text>
+        <text x="261" y="432" text-anchor="middle" font-size="9" fill="#5E38A0"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">低维 · 高精度</text>
+
+        <rect x="348" y="388" width="162" height="58" rx="7"
+              fill="#E8DFF6" stroke="#5E38A0" stroke-width="2"/>
+        <text x="429" y="412" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">XNet</text>
+        <text x="429" y="432" text-anchor="middle" font-size="9" fill="#5E38A0"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">高维 · 高效 · 超越 PINN</text>
+
+        <line x1="36" y1="464" x2="510" y2="464" stroke="#C0A8E0" stroke-width="0.5" stroke-dasharray="3 3"/>
+        <text x="275" y="479" text-anchor="middle" font-size="9" fill="#5E38A0"
+              font-style="italic" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">★ CauchyNet · XNet 为本工作原创架构，基于柯西积分公式构建</text>
+
+        <!-- ZONE C -->
+        <rect x="550" y="270" width="292" height="292" rx="10"
+              fill="#FDFAEE" stroke="#C8A830" stroke-width="0.8"/>
+        <rect x="550" y="270" width="36" height="24" rx="6" fill="#906A00"/>
+        <rect x="568" y="270" width="18" height="24" fill="#906A00"/>
+        <text x="568" y="286" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#fff" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">C</text>
+        <text x="596" y="286" font-size="11" font-weight="600" fill="#906A00"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">底层数学基础</text>
+
+        <rect x="570" y="306" width="252" height="128" rx="8"
+              fill="#FDF0B0" stroke="#906A00" stroke-width="1.3"/>
+        <text x="696" y="330" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#5A3E00" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">复分析 · 柯西积分公式</text>
+        <text x="696" y="352" text-anchor="middle" font-size="11.5" fill="#7A5500"
+              font-style="italic" font-family="Georgia, 'Times New Roman', serif">f(a) = 1/(2πi) ∮ f(z)/(z−a) dz</text>
+        <line x1="586" y1="364" x2="806" y2="364" stroke="#C8A830" stroke-width="0.6" stroke-dasharray="3 3"/>
+        <text x="696" y="382" text-anchor="middle" font-size="9" fill="#7A5500"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">全纯函数在任意点的精确解析表达</text>
+        <text x="696" y="398" text-anchor="middle" font-size="9" fill="#7A5500"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">→ 超越局部多项式逼近（Taylor/Chebyshev）</text>
+        <text x="696" y="414" text-anchor="middle" font-size="9" fill="#7A5500"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">→ 有限样本点上的高精度积分重构</text>
+
+        <line x1="566" y1="446" x2="836" y2="446" stroke="#DDB840" stroke-width="0.5" stroke-dasharray="2 2"/>
+        <text x="696" y="462" text-anchor="middle" font-size="10" font-weight="600"
+              fill="#906A00" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">理论支撑路径</text>
+        <text x="696" y="480" text-anchor="middle" font-size="9" fill="#7A5500"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">CauchyNet：复数域精确积分层</text>
+        <text x="696" y="498" text-anchor="middle" font-size="9" fill="#7A5500"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">XNet：高维流形上的扩展变换</text>
+        <text x="696" y="519" text-anchor="middle" font-size="9" fill="#906A00"
+              font-style="italic" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">核心主张：超越标准 PINN 基线</text>
+
+        <text x="16" y="572" font-size="9.5" fill="#888"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">Figure 1</text>
+      </svg>
+
+      <div class="figure-caption">
+        <b>Figure 1 | Lang-PINN 系统架构总览。</b>
+        (A) <b>核心推理流程</b>：用户自然语言经 <i>PDE Agent</i> 解析为符号偏微分方程（含周期性、几何与多尺度特征），
+        <i>PINN Agent</i> 从候选架构库中选取最优网络结构，<i>Code Agent</i> 生成模块化求解代码，
+        <i>Feedback Agent</i> 执行闭环评估并将误差与收敛性能数据反馈至 PDE Agent 与 PINN Agent，驱动迭代优化。
+        (B) <b>候选架构库</b>：涵盖 MLP、KAN、Transformer、CNN 四类通用架构，以及 CauchyNet 与 XNet 两类原创架构（粗框标注）；
+        PINN Agent 通过虚线选择通道管理架构库，选定架构经实线通道注入 Code Agent。
+        (C) <b>底层数学基础</b>：复分析中的柯西积分公式为 CauchyNet 与 XNet 提供理论支撑，实现对全纯函数在任意点的精确解析表达，
+        在近似精度上超越基于局部多项式的标准 PINN 方法。
+        实线箭头 = 数据 / 代码流；虚线箭头 = 选择 / 引用关系；粗边框节点 = 本工作原创贡献。
+      </div>
+    </div>
+  </div>
+
+  <div class="metrics reveal" role="list" aria-label="Key performance metrics">
+    <div class="metric" role="listitem">
       <span class="metric-val">10,000×</span>
       <span class="metric-label">faster than classical CFD<br>at equivalent accuracy</span>
     </div>
-    <div class="metric">
+    <div class="metric" role="listitem">
       <span class="metric-val">&lt; 2%</span>
       <span class="metric-label">physics residual error<br>on held-out test sets</span>
     </div>
-    <div class="metric">
+    <div class="metric" role="listitem">
       <span class="metric-val">100%</span>
       <span class="metric-label">auditable reasoning chain<br>per inference output</span>
     </div>
@@ -865,7 +1480,6 @@
         <span class="award">Northwestern Pancoe Chair</span>
       </div>
     </div>
-
   </div>
 </section>
 
@@ -878,55 +1492,55 @@
     Same rack, same boundary conditions, same accuracy target.
   </p>
 
-  <div class="reveal">
-  <table>
-    <thead>
-      <tr>
-        <th></th>
-        <th class="hl">CauchyX</th>
-        <th>CFD (OpenFOAM)</th>
-        <th>Pure LLM</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="col-label">Inference time</td>
-        <td class="hl">1.4 seconds</td>
-        <td class="bad">4.2 hours</td>
-        <td class="bad">1 second (wrong)</td>
-      </tr>
-      <tr>
-        <td class="col-label">Physics grounding</td>
-        <td class="good">✓ PDE-constrained</td>
-        <td class="good">✓ Full FEA</td>
-        <td class="bad">✗ None</td>
-      </tr>
-      <tr>
-        <td class="col-label">Uncertainty output</td>
-        <td class="good">✓ 95% CI</td>
-        <td class="bad">✗ None</td>
-        <td class="bad">✗ None</td>
-      </tr>
-      <tr>
-        <td class="col-label">Real-time streaming</td>
-        <td class="good">✓ Continuous</td>
-        <td class="bad">✗ Batch</td>
-        <td class="good">✓ Yes</td>
-      </tr>
-      <tr>
-        <td class="col-label">Audit trail</td>
-        <td class="good">✓ Full chain</td>
-        <td class="bad">✗ None</td>
-        <td class="bad">✗ None</td>
-      </tr>
-      <tr>
-        <td class="col-label">Cost per run</td>
-        <td class="hl">$0.04</td>
-        <td class="bad">$18.40</td>
-        <td class="bad">$0.02 (unreliable)</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="reveal" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th class="hl">CauchyX</th>
+          <th>CFD (OpenFOAM)</th>
+          <th>Pure LLM</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-label">Inference time</td>
+          <td class="hl">1.4 seconds</td>
+          <td class="bad">4.2 hours</td>
+          <td class="bad">1 second (wrong)</td>
+        </tr>
+        <tr>
+          <td class="col-label">Physics grounding</td>
+          <td class="good">✓ PDE-constrained</td>
+          <td class="good">✓ Full FEA</td>
+          <td class="bad">✗ None</td>
+        </tr>
+        <tr>
+          <td class="col-label">Uncertainty output</td>
+          <td class="good">✓ 95% CI</td>
+          <td class="bad">✗ None</td>
+          <td class="bad">✗ None</td>
+        </tr>
+        <tr>
+          <td class="col-label">Real-time streaming</td>
+          <td class="good">✓ Continuous</td>
+          <td class="bad">✗ Batch</td>
+          <td class="good">✓ Yes</td>
+        </tr>
+        <tr>
+          <td class="col-label">Audit trail</td>
+          <td class="good">✓ Full chain</td>
+          <td class="bad">✗ None</td>
+          <td class="bad">✗ None</td>
+        </tr>
+        <tr>
+          <td class="col-label">Cost per run</td>
+          <td class="hl">$0.04</td>
+          <td class="bad">$18.40</td>
+          <td class="bad">$0.02 (unreliable)</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </section>
 
@@ -953,7 +1567,7 @@
     </div>
     <div class="market-card" style="border-top:2px solid var(--purple)">
       <p class="market-phase">PHASE 2 — 2026</p>
-      <p class="market-name">Satellite & Aerospace Thermal</p>
+      <p class="market-name">Satellite &amp; Aerospace Thermal</p>
       <p class="market-desc">
         Commercial satellite constellation thermal control.
         On-orbit autonomy for thermal management without ground intervention.
@@ -979,6 +1593,48 @@
   </div>
 </section>
 
+<hr class="sep">
+
+<!-- ── DEMO ──────────────────────────────────────────────── -->
+<section id="demo">
+  <p class="section-label reveal">Live Demo</p>
+  <h2 class="reveal" style="margin-bottom:0.5rem">See CauchyX in action.</h2>
+  <p style="color:var(--muted);font-size:0.9rem;max-width:500px;margin-bottom:2.5rem" class="reveal">
+    Fill in a brief contact form and open an interactive walkthrough — available in Chinese or English.
+  </p>
+
+  <div class="demo-card reveal">
+    <div class="demo-card-content">
+      <div>
+        <p class="demo-card-title">Interactive Product Demo</p>
+        <p class="demo-card-desc">
+          Physics-informed inference · Real-time field visualization · Audit reasoning chain
+        </p>
+        <div class="demo-card-tags">
+          <span class="layer-tag tag-cyan">Heat Transfer</span>
+          <span class="layer-tag tag-purple">Fluid Dynamics</span>
+          <span class="layer-tag tag-gold">LLM Agent</span>
+        </div>
+      </div>
+      <div class="demo-card-actions">
+        <button class="demo-lang-btn demo-lang-cn" onclick="openDemoModal('cn')" type="button">
+          <span class="demo-lang-flag">🇨🇳</span>
+          <span>
+            <span class="demo-lang-primary">中文 Demo</span>
+            <span class="demo-lang-sub">Chinese version</span>
+          </span>
+        </button>
+        <button class="demo-lang-btn demo-lang-en" onclick="openDemoModal('en')" type="button">
+          <span class="demo-lang-flag">🇺🇸</span>
+          <span>
+            <span class="demo-lang-primary">English Demo</span>
+            <span class="demo-lang-sub">English version</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ── CONTACT ────────────────────────────────────────────── -->
 <div class="contact-section" id="contact">
@@ -989,26 +1645,98 @@
     working in thermal management, or investing in deep tech —
     we'd like to talk.
   </p>
-  <a href="mailto:dennis@cauchyx.ai" class="contact-email">dennis@cauchyx.ai</a>
+  <a href="mailto:dennis@cauchyx.ai" class="contact-email" aria-label="Email CauchyX at dennis@cauchyx.ai">dennis@cauchyx.ai</a>
 </div>
 
 <footer>
-  <span class="footer-copy">© 2025 CauchyX AI · Palo Alto, CA</span>
+  <span class="footer-copy">© 2025 CauchyX AI · Santa Clara, CA</span>
   <div class="footer-links">
-    <a href="https://x.com/cauchyx" target="_blank">X / Twitter</a>
-    <a href="https://arxiv.org" target="_blank">arXiv</a>
-    <a href="https://linkedin.com/company/cauchyx" target="_blank">LinkedIn</a>
+    <a href="https://x.com/cauchyx" target="_blank" rel="noopener noreferrer" aria-label="CauchyX on X / Twitter">X / Twitter</a>
+    <a href="https://arxiv.org" target="_blank" rel="noopener noreferrer" aria-label="arXiv preprints">arXiv</a>
+    <a href="https://linkedin.com/company/cauchyx" target="_blank" rel="noopener noreferrer" aria-label="CauchyX on LinkedIn">LinkedIn</a>
   </div>
 </footer>
 
 </div><!-- .content -->
 
+<!-- ── DEMO MODAL ─────────────────────────────────────────── -->
+<div id="demo-modal" class="dm-overlay" role="dialog" aria-modal="true" aria-labelledby="dm-title" aria-hidden="true">
+  <div class="dm-box">
+    <button class="dm-close" onclick="closeDemoModal()" aria-label="Close dialog">×</button>
+
+    <p class="dm-eyebrow">REQUEST DEMO</p>
+    <h2 class="dm-title" id="dm-title">体验 CauchyX 演示</h2>
+    <p class="dm-desc">请填写以下信息，然后选择演示语言，系统将在新窗口中打开演示页面。</p>
+    <p class="dm-desc-en">Complete the form below, then choose a demo language — it will open in a new window.</p>
+
+    <form id="dm-form" novalidate autocomplete="off">
+      <div class="dm-grid">
+
+        <div class="dm-field">
+          <label class="dm-label" for="dm-name">姓名 / Name <span class="dm-req" aria-hidden="true">*</span></label>
+          <input class="dm-input" type="text" id="dm-name" name="name"
+                 placeholder="Full name" autocomplete="name" required>
+          <span class="dm-err" id="dm-name-err" role="alert"></span>
+        </div>
+
+        <div class="dm-field">
+          <label class="dm-label" for="dm-company">公司 / Company <span class="dm-req" aria-hidden="true">*</span></label>
+          <input class="dm-input" type="text" id="dm-company" name="company"
+                 placeholder="Company name" autocomplete="organization" required>
+          <span class="dm-err" id="dm-company-err" role="alert"></span>
+        </div>
+
+        <div class="dm-field">
+          <label class="dm-label" for="dm-title">职位 / Title <span class="dm-req" aria-hidden="true">*</span></label>
+          <input class="dm-input" type="text" id="dm-title" name="title"
+                 placeholder="Your role / title" autocomplete="organization-title" required>
+          <span class="dm-err" id="dm-title-err" role="alert"></span>
+        </div>
+
+        <div class="dm-field">
+          <label class="dm-label" for="dm-phone">电话 / Phone <span class="dm-optional">(optional)</span></label>
+          <input class="dm-input" type="tel" id="dm-phone" name="phone"
+                 placeholder="+1 (555) 000-0000" autocomplete="tel">
+        </div>
+
+        <div class="dm-field dm-field-full">
+          <label class="dm-label" for="dm-email">邮箱 / Email <span class="dm-req" aria-hidden="true">*</span></label>
+          <input class="dm-input" type="email" id="dm-email" name="email"
+                 placeholder="you@company.com" autocomplete="email" required>
+          <span class="dm-err" id="dm-email-err" role="alert"></span>
+        </div>
+
+      </div><!-- .dm-grid -->
+
+      <p class="dm-note">
+        <span class="dm-req" aria-hidden="true">*</span> Required fields.
+        Your information is used only to improve CauchyX demos and will not be shared.
+      </p>
+
+      <div class="dm-actions">
+        <button class="dm-btn dm-btn-cn" type="button" id="dm-open-cn" onclick="submitDemo('cauchyx_demo.html')">
+          <span class="dm-btn-flag">🇨🇳</span>
+          <span class="dm-btn-text">中文 Demo</span>
+        </button>
+        <button class="dm-btn dm-btn-en" type="button" id="dm-open-en" onclick="submitDemo('cauchyx_demo_en.html')">
+          <span class="dm-btn-flag">🇺🇸</span>
+          <span class="dm-btn-text">English Demo</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Back to top -->
+<button class="back-to-top" id="back-to-top" aria-label="Back to top" title="Back to top">↑</button>
+
 <script>
-// ── Subtle animated physics field background ───────────────
+// ── Animated physics field background ─────────────────────
 (function() {
   const canvas = document.getElementById('bg-canvas');
   const ctx = canvas.getContext('2d');
-  let W, H, particles = [];
+  let W, H, particles = [], rafId = null;
 
   function resize() {
     W = canvas.width  = window.innerWidth;
@@ -1017,8 +1745,6 @@
   resize();
   window.addEventListener('resize', resize);
 
-  // Generate a sparse grid of flow vectors
-  const COLS = 24, ROWS = 16;
   function initParticles() {
     particles = [];
     for (let i = 0; i < 80; i++) {
@@ -1034,7 +1760,6 @@
   }
   initParticles();
 
-  // Simple potential field: superposition of two sources
   function field(x, y, t) {
     const nx = x / W, ny = y / H;
     const vx = Math.sin(ny * 3 + t * 0.3) * 0.6 + Math.cos(nx * 2.5 - t * 0.2) * 0.4;
@@ -1046,7 +1771,6 @@
   function draw() {
     ctx.clearRect(0, 0, W, H);
     t += 0.008;
-
     particles.forEach(p => {
       const f = field(p.x, p.y, t);
       p.vx = p.vx * 0.92 + f.vx * 0.08;
@@ -1054,7 +1778,6 @@
       p.x += p.vx * 1.2;
       p.y += p.vy * 1.2;
       p.life += 0.003;
-
       if (p.life > p.maxLife || p.x < 0 || p.x > W || p.y < 0 || p.y > H) {
         p.x = Math.random() * W;
         p.y = Math.random() * H;
@@ -1062,27 +1785,221 @@
         p.life = 0;
         p.maxLife = 0.6 + Math.random() * 0.4;
       }
-
       const alpha = Math.sin(p.life / p.maxLife * Math.PI) * 0.9;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(0,204,238,${alpha})`;
       ctx.fill();
     });
-
-    requestAnimationFrame(draw);
+    rafId = requestAnimationFrame(draw);
   }
-  draw();
+
+  function start() { if (!rafId) { rafId = requestAnimationFrame(draw); } }
+  function stop()  { if (rafId)  { cancelAnimationFrame(rafId); rafId = null; } }
+
+  // Pause when tab is hidden to save CPU
+  document.addEventListener('visibilitychange', () => {
+    document.hidden ? stop() : start();
+  });
+
+  start();
 })();
 
 // ── Scroll reveal ──────────────────────────────────────────
-const observer = new IntersectionObserver(
+const revealObserver = new IntersectionObserver(
   entries => entries.forEach(e => {
-    if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      revealObserver.unobserve(e.target);
+    }
   }),
   { threshold: 0.1 }
 );
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// ── Active nav highlighting on scroll ─────────────────────
+(function() {
+  const sections = ['research', 'founders', 'market', 'contact'];
+  const navLinks = {};
+  sections.forEach(id => {
+    const el = document.querySelector(`.nav-links a[href="#${id}"]`);
+    if (el) navLinks[id] = el;
+  });
+
+  const sectionObserver = new IntersectionObserver(
+    entries => {
+      entries.forEach(e => {
+        const id = e.target.id;
+        if (navLinks[id]) {
+          navLinks[id].classList.toggle('active', e.isIntersecting);
+        }
+      });
+    },
+    { rootMargin: '-20% 0px -60% 0px' }
+  );
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) sectionObserver.observe(el);
+  });
+})();
+
+// ── Mobile hamburger menu ──────────────────────────────────
+(function() {
+  const toggle = document.getElementById('nav-toggle');
+  const links  = document.getElementById('nav-links');
+  if (!toggle || !links) return;
+
+  toggle.addEventListener('click', () => {
+    const open = links.classList.toggle('open');
+    toggle.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+  });
+
+  // Close on link click
+  links.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      links.classList.remove('open');
+      toggle.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // Close on outside click
+  document.addEventListener('click', e => {
+    if (!toggle.contains(e.target) && !links.contains(e.target)) {
+      links.classList.remove('open');
+      toggle.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+})();
+
+// ── Back to top button ─────────────────────────────────────
+(function() {
+  const btn = document.getElementById('back-to-top');
+  if (!btn) return;
+
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > 400);
+  }, { passive: true });
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+
+// ── Demo Modal ─────────────────────────────────────────────
+(function() {
+  const overlay = document.getElementById('demo-modal');
+  let _pendingLang = null;
+
+  // Add "demo" to active nav observer
+  const demoSection = document.getElementById('demo');
+  const demoNavLink = document.querySelector('.nav-demo-link');
+  if (demoSection && demoNavLink) {
+    const obs = new IntersectionObserver(
+      entries => entries.forEach(e => {
+        demoNavLink.classList.toggle('active', e.isIntersecting);
+      }),
+      { rootMargin: '-20% 0px -60% 0px' }
+    );
+    obs.observe(demoSection);
+  }
+
+  // Close on overlay click (outside box)
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeDemoModal();
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) closeDemoModal();
+  });
+
+  window.openDemoModal = function(lang) {
+    _pendingLang = lang || null;
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    // Pre-select button highlight if lang given
+    document.getElementById('dm-open-cn').classList.toggle('dm-btn-active', lang === 'cn');
+    document.getElementById('dm-open-en').classList.toggle('dm-btn-active', lang === 'en');
+    setTimeout(() => document.getElementById('dm-name').focus(), 120);
+  };
+
+  window.closeDemoModal = function() {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    clearErrors();
+  };
+
+  window.submitDemo = function(file) {
+    if (!validateForm()) return;
+    closeDemoModal();
+    window.open(file, '_blank', 'noopener,noreferrer');
+  };
+
+  function validateForm() {
+    clearErrors();
+    let ok = true;
+
+    const rules = [
+      { id: 'dm-name',    errId: 'dm-name-err',    msg: '请填写姓名 / Name is required.' },
+      { id: 'dm-company', errId: 'dm-company-err',  msg: '请填写公司 / Company is required.' },
+      { id: 'dm-title',   errId: 'dm-title-err',    msg: '请填写职位 / Title is required.' },
+    ];
+
+    rules.forEach(r => {
+      const el = document.getElementById(r.id);
+      if (!el.value.trim()) {
+        showError(el, r.errId, r.msg);
+        ok = false;
+      }
+    });
+
+    const emailEl = document.getElementById('dm-email');
+    const emailVal = emailEl.value.trim();
+    if (!emailVal) {
+      showError(emailEl, 'dm-email-err', '请填写邮箱 / Email is required.');
+      ok = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+      showError(emailEl, 'dm-email-err', '邮箱格式有误 / Invalid email address.');
+      ok = false;
+    }
+
+    return ok;
+  }
+
+  function showError(input, errId, msg) {
+    input.classList.add('invalid');
+    const errEl = document.getElementById(errId);
+    if (errEl) errEl.textContent = msg;
+  }
+
+  function clearErrors() {
+    ['dm-name', 'dm-company', 'dm-title', 'dm-email'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('invalid');
+    });
+    ['dm-name-err', 'dm-company-err', 'dm-title-err', 'dm-email-err'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '';
+    });
+  }
+
+  // Clear error on input
+  ['dm-name', 'dm-company', 'dm-title', 'dm-email'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => {
+        el.classList.remove('invalid');
+        const errEl = document.getElementById(id + '-err');
+        if (errEl) errEl.textContent = '';
+      });
+    }
+  });
+})();
 </script>
 
 </body>
