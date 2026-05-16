@@ -906,6 +906,7 @@
     font-weight: 500;
     letter-spacing: 0.04em;
     transition: all 0.15s;
+    text-decoration: none;
   }
   .dm-btn-flag { font-size: 1.1rem; }
   .dm-btn-cn {
@@ -1716,14 +1717,16 @@
       </p>
 
       <div class="dm-actions">
-        <button class="dm-btn dm-btn-cn" type="button" id="dm-open-cn" onclick="submitDemo('cauchyx_demo.html')">
+        <a class="dm-btn dm-btn-cn" href="cauchyx_demo.html" target="_blank" rel="noopener"
+           id="dm-open-cn" onclick="return dmClickDemo(event, this)">
           <span class="dm-btn-flag">🇨🇳</span>
           <span class="dm-btn-text">中文 Demo</span>
-        </button>
-        <button class="dm-btn dm-btn-en" type="button" id="dm-open-en" onclick="submitDemo('cauchyx_demo_en.html')">
+        </a>
+        <a class="dm-btn dm-btn-en" href="cauchyx_demo_en.html" target="_blank" rel="noopener"
+           id="dm-open-en" onclick="return dmClickDemo(event, this)">
           <span class="dm-btn-flag">🇺🇸</span>
           <span class="dm-btn-text">English Demo</span>
-        </button>
+        </a>
       </div>
 
     </form>
@@ -1913,22 +1916,15 @@ function closeDemoModal() {
   dmClearErrors();
 }
 
-function submitDemo(file) {
-  if (!dmValidate()) return;
-
-  // Open window immediately — must be synchronous inside the click handler
-  var w = window.open(file, '_blank');
-  // Fallback: if popup was blocked, navigate current tab after a delay
-  if (!w || w.closed || typeof w.closed === 'undefined') {
-    if (confirm('弹窗被拦截。是否在当前标签页打开 Demo？\nPopup blocked. Open demo in this tab?')) {
-      window.location.href = file;
-      return;
-    }
+// Called by <a onclick>. Returns false to block navigation when invalid,
+// returns true to let the browser open href in a new tab (no window.open needed).
+function dmClickDemo(event, link) {
+  if (!dmValidate()) {
+    event.preventDefault();
+    return false;
   }
 
-  closeDemoModal();
-
-  // Save contact to GitHub in background
+  // Collect data before closing modal
   var data = {
     name:    document.getElementById('dm-name').value.trim(),
     company: document.getElementById('dm-company').value.trim(),
@@ -1936,7 +1932,10 @@ function submitDemo(file) {
     phone:   document.getElementById('dm-phone').value.trim(),
     email:   document.getElementById('dm-email').value.trim()
   };
-  dmSaveContact(data);
+
+  closeDemoModal();
+  dmSaveContact(data); // fire-and-forget background save
+  return true;         // browser follows href target="_blank" → new tab
 }
 
 function dmValidate() {
