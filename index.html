@@ -1934,7 +1934,6 @@ document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
     overlay.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
     clearErrors();
-    _setButtonLoading(null, false);
   };
 
   // ── Save contact row to GitHub contact.csv ────────────────
@@ -2008,12 +2007,10 @@ document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
     });
   }
 
-  window.submitDemo = async function(file) {
+  window.submitDemo = function(file) {
     if (!validateForm()) return;
 
-    const btnId = file.includes('_en') ? 'dm-open-en' : 'dm-open-cn';
-    _setButtonLoading(btnId, true);
-
+    // Collect form data
     const data = {
       name:    document.getElementById('dm-name').value.trim(),
       company: document.getElementById('dm-company').value.trim(),
@@ -2022,11 +2019,15 @@ document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
       email:   document.getElementById('dm-email').value.trim(),
     };
 
-    // Save then open (even if save fails, still open the demo)
-    await saveContact(data);
-
-    closeDemoModal();
+    // ① Open demo window SYNCHRONOUSLY (must stay in user-gesture context
+    //    before any await; popup blockers kill window.open after async gaps)
     window.open(file, '_blank', 'noopener,noreferrer');
+
+    // ② Close modal
+    closeDemoModal();
+
+    // ③ Save contact in background — fire-and-forget, never blocks the user
+    saveContact(data).catch(e => console.warn('[contact]', e.message));
   };
 
   function validateForm() {
