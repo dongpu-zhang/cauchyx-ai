@@ -455,6 +455,88 @@ canvas { display: block; border-radius: 4px; width: 100%; }
 
 /* Loss curve mini viz */
 .loss-curve { width: 100%; height: 60px; }
+
+/* ===== Mobile ===== */
+.panel-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 97;
+  cursor: pointer;
+}
+.panel-overlay.open { display: block; }
+.mobile-tabs { display: none; }
+
+@media (max-width: 768px) {
+  .header { padding: 8px 12px; }
+  .logo-sub { display: none; }
+  .tag-amber { display: none; }
+  .header-tags { gap: 5px; }
+  .tag { padding: 2px 7px; font-size: 9px; }
+
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: min(280px, 82vw);
+    z-index: 98;
+    transform: translateX(-110%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    overflow-y: auto;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+  }
+  .sidebar.open { transform: translateX(0); box-shadow: 8px 0 32px rgba(0,0,0,0.6); }
+
+  .right-panel {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: min(280px, 82vw);
+    z-index: 98;
+    transform: translateX(110%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    overflow-y: auto;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+  }
+  .right-panel.open { transform: translateX(0); box-shadow: -8px 0 32px rgba(0,0,0,0.6); }
+
+  .chat-area { min-width: 0; }
+  .msg-content { max-width: 88%; }
+  .messages { padding: 12px 10px; gap: 12px; }
+  .msg-bubble { font-size: 12px; padding: 10px 12px; }
+  pre { font-size: 10px; }
+  .input-area { padding: 8px 10px 10px; }
+  .input-hints { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; gap: 5px; -webkit-overflow-scrolling: touch; }
+  .hint-chip { flex-shrink: 0; font-size: 9px; padding: 3px 8px; }
+
+  .mobile-tabs {
+    display: flex;
+    border-top: 1px solid var(--border);
+    background: rgba(4,6,15,0.97);
+    flex-shrink: 0;
+    z-index: 10;
+    position: relative;
+  }
+  .mobile-tab {
+    flex: 1;
+    padding: 8px 4px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: color 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .mobile-tab.active { color: var(--cyan); }
+  .mobile-tab .tab-icon { font-size: 18px; line-height: 1.2; }
+}
 </style>
 </head>
 <body>
@@ -480,6 +562,8 @@ canvas { display: block; border-radius: 4px; width: 100%; }
 </div>
 
 <div class="main">
+
+  <div class="panel-overlay" id="panelOverlay" onclick="closeMobilePanels()"></div>
 
   <!-- Sidebar -->
   <div class="sidebar">
@@ -625,6 +709,18 @@ canvas { display: block; border-radius: 4px; width: 100%; }
 
 </div>
 
+<div class="mobile-tabs">
+  <button class="mobile-tab" id="tab-scene" onclick="openMobilePanel('sidebar')">
+    <span class="tab-icon">📋</span><span>场景</span>
+  </button>
+  <button class="mobile-tab active" id="tab-chat" onclick="openMobilePanel('chat')">
+    <span class="tab-icon">💬</span><span>对话</span>
+  </button>
+  <button class="mobile-tab" id="tab-status" onclick="openMobilePanel('right')">
+    <span class="tab-icon">📊</span><span>状态</span>
+  </button>
+</div>
+
 <script>
 const scenarios = [
   {
@@ -659,6 +755,34 @@ function selectScenario(idx, btn) {
   btn.classList.add('active');
   currentScenario = idx;
   document.getElementById('inputBox').value = scenarios[idx].prompt;
+  if (window.innerWidth <= 768) closeMobilePanels();
+}
+
+function openMobilePanel(which) {
+  const sidebar = document.querySelector('.sidebar');
+  const right = document.querySelector('.right-panel');
+  const overlay = document.getElementById('panelOverlay');
+  sidebar.classList.remove('open');
+  right.classList.remove('open');
+  overlay.classList.remove('open');
+  if (which === 'sidebar') {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+    setMobileTab('tab-scene');
+  } else if (which === 'right') {
+    right.classList.add('open');
+    overlay.classList.add('open');
+    setMobileTab('tab-status');
+  } else {
+    setMobileTab('tab-chat');
+  }
+}
+function closeMobilePanels() { openMobilePanel('chat'); }
+function setMobileTab(id) {
+  ['tab-scene','tab-chat','tab-status'].forEach(t => {
+    const el = document.getElementById(t);
+    if (el) el.classList.toggle('active', el.id === id);
+  });
 }
 
 function fillHint(idx) {
