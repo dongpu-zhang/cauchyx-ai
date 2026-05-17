@@ -572,50 +572,97 @@
     min-width: 480px;
   }
 
-  /* ─── RESEARCH FIGURE (light-bg academic figure) ─────── */
-  .research-figure-wrap {
+  /* ─── CauchyX Architecture Diagram ─────────────────── */
+  .cx-arch {
+    --bg: #03070f; --surface: #080f1e; --border: #0d1f3c; --border2: #1a3560;
+    --cyan: #00e5ff; --emerald: #00ffb3; --amber: #ffcf40; --violet: #b39dff;
+    --rose: #ff6b8a; --text: #c5d8f5; --muted: #3d5880; --bright: #eaf4ff;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 40px 32px;
+    overflow: hidden;
+    position: relative;
     margin-top: 3.5rem;
-    padding-top: 3rem;
-    border-top: 1px solid var(--border);
   }
-  .research-figure-label {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.14em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 1rem;
+  .cx-arch .arch-header { text-align: center; margin-bottom: 44px; }
+  .cx-arch .arch-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 14px; border-radius: 20px;
+    border: 1px solid rgba(0,229,255,0.25); background: rgba(0,229,255,0.06);
+    font-family: var(--mono); font-size: 11px; color: var(--cyan);
+    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px;
   }
-  .research-figure-title {
-    font-size: 1.1rem;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    color: var(--text);
-    margin-bottom: 1.5rem;
+  .cx-arch .arch-eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); animation: cx-pulse 2s infinite; }
+  @keyframes cx-pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,229,255,0.4)} 60%{opacity:.7;box-shadow:0 0 0 6px rgba(0,229,255,0)} }
+  .cx-arch .arch-h1 { font-size: clamp(22px,3vw,36px); font-weight: 700; line-height: 1.15; color: var(--bright); letter-spacing: -0.3px; margin-bottom: 12px; }
+  .cx-arch .arch-h1 em { font-style: normal; color: var(--cyan); }
+  .cx-arch .arch-subhead { font-size: 14px; color: var(--muted); max-width: 580px; margin: 0 auto; line-height: 1.75; }
+  .cx-arch .diagram { display: grid; grid-template-columns: 1fr; gap: 0; }
+  .cx-arch .vert-connect { display: flex; flex-direction: column; align-items: center; margin: 4px 0; }
+  .cx-arch .vc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
+  .cx-arch .vc-line { width: 1px; height: 28px; background: linear-gradient(to bottom, var(--border2), transparent); }
+  .cx-arch .vc-arrow { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--border2); }
+  .cx-arch .arch-section-label { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .cx-arch .sl-line { flex: 1; height: 1px; background: var(--border); }
+  .cx-arch .sl-text { font-size: 10px; font-family: var(--mono); color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; white-space: nowrap; }
+  .cx-arch .input-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  .cx-arch .input-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 10px; transition: border-color 0.3s,background 0.3s; }
+  .cx-arch .input-chip:hover { border-color: rgba(0,229,255,0.3); background: rgba(0,229,255,0.04); }
+  .cx-arch .input-chip .ic-icon { font-size: 18px; flex-shrink: 0; }
+  .cx-arch .input-chip .ic-label { font-size: 12px; font-weight: 600; color: var(--text); }
+  .cx-arch .input-chip .ic-desc { font-size: 10px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .cx-arch .agent-core { border: 1.5px solid rgba(0,229,255,0.35); border-radius: 20px; background: linear-gradient(135deg,rgba(0,229,255,0.06) 0%,rgba(8,15,30,0.9) 100%); padding: 28px 32px; position: relative; overflow: hidden; }
+  .cx-arch .agent-core::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg,transparent,var(--cyan),transparent); opacity: 0.6; }
+  .cx-arch .agent-title { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .cx-arch .agent-badge { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--cyan); display: flex; align-items: center; justify-content: center; font-size: 15px; color: var(--cyan); font-family: var(--mono); background: rgba(0,229,255,0.08); }
+  .cx-arch .agent-name { font-size: 14px; font-weight: 700; color: var(--bright); }
+  .cx-arch .agent-sub { font-size: 10px; color: var(--muted); font-family: var(--mono); letter-spacing: 1px; text-transform: uppercase; }
+  .cx-arch .agent-inner { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .cx-arch .agent-module { border: 1px solid var(--border2); border-radius: 12px; padding: 14px 16px; background: rgba(0,0,0,0.3); transition: border-color 0.3s; }
+  .cx-arch .agent-module:hover { border-color: rgba(0,229,255,0.3); }
+  .cx-arch .m-icon { font-size: 20px; margin-bottom: 8px; }
+  .cx-arch .m-name { font-size: 11px; font-weight: 700; color: var(--bright); margin-bottom: 4px; }
+  .cx-arch .m-desc { font-size: 10px; color: var(--muted); line-height: 1.6; font-family: var(--mono); }
+  .cx-arch .module-tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 9px; font-family: var(--mono); letter-spacing: 0.5px; margin-top: 6px; border: 1px solid; }
+  .cx-arch .mtag-cyan    { color: #00e5ff; border-color: rgba(0,229,255,0.3);   background: rgba(0,229,255,0.08); }
+  .cx-arch .mtag-emerald { color: #00ffb3; border-color: rgba(0,255,179,0.3);   background: rgba(0,255,179,0.08); }
+  .cx-arch .mtag-violet  { color: #b39dff; border-color: rgba(179,157,255,0.3); background: rgba(179,157,255,0.08); }
+  .cx-arch .mtag-amber   { color: #ffcf40; border-color: rgba(255,207,64,0.3);  background: rgba(255,207,64,0.08); }
+  .cx-arch .prog-act-strip { margin-top: 14px; padding: 10px 14px; border-radius: 10px; background: rgba(179,157,255,0.08); border: 1px solid rgba(179,157,255,0.2); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .cx-arch .pa-label { font-size: 10px; font-weight: 700; color: #b39dff; font-family: var(--mono); }
+  .cx-arch .pa-items { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cx-arch .pa-item { font-size: 9px; font-family: var(--mono); color: var(--muted); padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border2); background: rgba(0,0,0,0.3); }
+  .cx-arch .solver-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+  .cx-arch .solver-card { border: 1px solid var(--border); border-radius: 14px; padding: 18px 14px; background: var(--surface); text-align: center; transition: all 0.3s; position: relative; overflow: hidden; }
+  .cx-arch .solver-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; border-radius: 0 0 14px 14px; opacity: 0; transition: opacity 0.3s; }
+  .cx-arch .solver-card:hover { transform: translateY(-2px); }
+  .cx-arch .solver-card:hover::after { opacity: 1; }
+  .cx-arch .sc-cauchy  { border-color: rgba(0,255,179,0.3); }  .cx-arch .sc-cauchy::after  { background: #00ffb3; } .cx-arch .sc-cauchy:hover  { background: rgba(0,255,179,0.05); }
+  .cx-arch .sc-pinn    { border-color: rgba(0,229,255,0.25); } .cx-arch .sc-pinn::after    { background: #00e5ff; } .cx-arch .sc-pinn:hover    { background: rgba(0,229,255,0.04); }
+  .cx-arch .sc-op      { border-color: rgba(255,207,64,0.25); }.cx-arch .sc-op::after      { background: #ffcf40; } .cx-arch .sc-op:hover      { background: rgba(255,207,64,0.04); }
+  .cx-arch .sc-classic { border-color: rgba(100,116,139,0.3); }.cx-arch .sc-classic::after { background: #64748b; } .cx-arch .sc-classic:hover { background: rgba(100,116,139,0.04); }
+  .cx-arch .sc-hybrid  { border-color: rgba(179,157,255,0.3); }.cx-arch .sc-hybrid::after  { background: #b39dff; } .cx-arch .sc-hybrid:hover  { background: rgba(179,157,255,0.05); }
+  .cx-arch .solver-icon { font-size: 22px; margin-bottom: 8px; }
+  .cx-arch .solver-name { font-size: 11px; font-weight: 700; color: var(--bright); margin-bottom: 4px; }
+  .cx-arch .solver-sub  { font-size: 9px; color: var(--muted); font-family: var(--mono); line-height: 1.5; }
+  .cx-arch .solver-star { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-family: var(--mono); font-weight: 500; padding: 2px 7px; border-radius: 10px; margin-top: 8px; }
+  .cx-arch .star-emerald { color: #00ffb3; background: rgba(0,255,179,0.1);  border: 1px solid rgba(0,255,179,0.2); }
+  .cx-arch .star-cyan    { color: #00e5ff; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); }
+  .cx-arch .output-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  .cx-arch .output-card { border: 1px solid rgba(255,207,64,0.2); border-radius: 12px; padding: 16px; background: rgba(255,207,64,0.04); display: flex; align-items: flex-start; gap: 12px; transition: all 0.3s; }
+  .cx-arch .output-card:hover { border-color: rgba(255,207,64,0.4); background: rgba(255,207,64,0.07); }
+  .cx-arch .out-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+  .cx-arch .out-name { font-size: 11px; font-weight: 700; color: var(--bright); margin-bottom: 3px; }
+  .cx-arch .out-desc { font-size: 10px; color: var(--muted); line-height: 1.5; font-family: var(--mono); }
+  @media (max-width: 768px) {
+    .cx-arch { padding: 24px 14px; }
+    .cx-arch .input-row  { grid-template-columns: repeat(2,1fr); }
+    .cx-arch .agent-inner { grid-template-columns: 1fr; }
+    .cx-arch .solver-row { grid-template-columns: repeat(2,1fr); }
+    .cx-arch .sc-hybrid  { grid-column: 1 / -1; }
+    .cx-arch .output-row { grid-template-columns: repeat(2,1fr); }
   }
-  .research-figure-inner {
-    background: #fff;
-    border-radius: 6px;
-    border: 1px solid #d0d5e0;
-    padding: 1.5rem 1.5rem 1rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .research-figure-inner svg {
-    display: block;
-    min-width: 600px;
-    width: 100%;
-    height: auto;
-  }
-  .figure-caption {
-    font-size: 0.8rem;
-    color: #444;
-    line-height: 1.72;
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid #ddd;
-  }
-  .figure-caption b { font-weight: 700; color: #111; }
 
   /* ─── BACK TO TOP ─────────────────────────────────────── */
   .back-to-top {
@@ -1215,230 +1262,126 @@
     </div>
   </div>
 
-  <!-- ── LANG-PINN Research Figure ──────────────────────── -->
-  <div class="research-figure-wrap reveal">
-    <p class="research-figure-label">Research Figure</p>
-    <p class="research-figure-title">Lang-PINN System Architecture</p>
-    <div class="research-figure-inner" aria-label="Lang-PINN system architecture diagram with three zones: core pipeline, candidate architectures, and mathematical foundations">
-      <svg width="858" height="578" viewBox="0 0 858 578" xmlns="http://www.w3.org/2000/svg" role="img"
-           aria-label="Lang-PINN architecture diagram showing multi-agent orchestration of PINN architectures grounded in Cauchy integral theory">
-        <defs>
-          <marker id="lp-arr" viewBox="0 0 10 10" refX="9" refY="5"
-                  markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-            <path d="M1 1.5L9 5L1 8.5" fill="none" stroke="context-stroke"
-                  stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </marker>
-          <marker id="lp-arrs" viewBox="0 0 10 10" refX="9" refY="5"
-                  markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-            <path d="M1 1.5L9 5L1 8.5" fill="none" stroke="context-stroke"
-                  stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </marker>
-        </defs>
+  <!-- ── CauchyX Architecture Diagram ─────────────────── -->
+  <div class="cx-arch reveal">
 
-        <!-- ZONE A -->
-        <rect x="16" y="16" width="826" height="242" rx="10"
-              fill="#F3F7FD" stroke="#8AAED2" stroke-width="0.8"/>
-        <rect x="16" y="16" width="36" height="24" rx="6" fill="#1E5FA0"/>
-        <rect x="34" y="16" width="18" height="24" fill="#1E5FA0"/>
-        <text x="34" y="32" text-anchor="middle" font-size="12" font-weight="700"
-              fill="#fff" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">A</text>
-        <text x="62" y="32" font-size="11" font-weight="600" fill="#1E5FA0"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">Lang-PINN 核心流程</text>
-
-        <rect x="34" y="80" width="112" height="68" rx="7"
-              fill="#EBEBEB" stroke="#9A9A9A" stroke-width="0.8"/>
-        <text x="90" y="107" text-anchor="middle" font-size="11" font-weight="600"
-              fill="#333" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">用户输入</text>
-        <text x="90" y="125" text-anchor="middle" font-size="9.5" fill="#666"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">自然语言描述</text>
-
-        <rect x="168" y="80" width="144" height="68" rx="7"
-              fill="#E2EDF8" stroke="#1E5FA0" stroke-width="1.2"/>
-        <text x="240" y="103" text-anchor="middle" font-size="11" font-weight="700"
-              fill="#163F74" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">① PDE Agent</text>
-        <text x="240" y="120" text-anchor="middle" font-size="9.5" fill="#1E5FA0"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">解析为符号 PDE</text>
-        <text x="240" y="136" text-anchor="middle" font-size="8.5" fill="#4A80BB"
-              font-style="italic" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">周期 · 几何 · 多尺度特征</text>
-
-        <rect x="334" y="80" width="154" height="68" rx="7"
-              fill="#E2EDF8" stroke="#1E5FA0" stroke-width="1.2"/>
-        <text x="411" y="103" text-anchor="middle" font-size="11" font-weight="700"
-              fill="#163F74" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">② PINN Agent</text>
-        <text x="411" y="120" text-anchor="middle" font-size="9.5" fill="#1E5FA0"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">选择最优求解架构</text>
-
-        <rect x="512" y="80" width="144" height="68" rx="7"
-              fill="#DCF0E8" stroke="#1A7048" stroke-width="1.2"/>
-        <text x="584" y="103" text-anchor="middle" font-size="11" font-weight="700"
-              fill="#0E4D2C" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">③ Code Agent</text>
-        <text x="584" y="120" text-anchor="middle" font-size="9.5" fill="#1A7048"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">生成模块化求解代码</text>
-
-        <rect x="688" y="80" width="144" height="68" rx="7"
-              fill="#FDEEE4" stroke="#C04820" stroke-width="1.2"/>
-        <text x="760" y="100" text-anchor="middle" font-size="11" font-weight="700"
-              fill="#8C2E0E" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">④ Feedback Agent</text>
-        <text x="760" y="117" text-anchor="middle" font-size="9.5" fill="#C04820"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">执行 · 评估 · 优化</text>
-        <text x="760" y="134" text-anchor="middle" font-size="8.5" fill="#C04820"
-              font-style="italic" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">误差 · 收敛 · 性能指标</text>
-
-        <!-- Forward arrows -->
-        <line x1="146" y1="114" x2="166" y2="114" stroke="#555" stroke-width="1.3" marker-end="url(#lp-arr)"/>
-        <line x1="312" y1="114" x2="332" y2="114" stroke="#555" stroke-width="1.3" marker-end="url(#lp-arr)"/>
-        <line x1="488" y1="114" x2="510" y2="114" stroke="#555" stroke-width="1.3" marker-end="url(#lp-arr)"/>
-        <line x1="656" y1="114" x2="686" y2="114" stroke="#555" stroke-width="1.3" marker-end="url(#lp-arr)"/>
-
-        <!-- Feedback arcs -->
-        <path d="M760,148 C760,170 584,170 584,148"
-              fill="none" stroke="#C04820" stroke-width="1.1" marker-end="url(#lp-arrs)"/>
-        <text x="672" y="182" text-anchor="middle" font-size="8.5" fill="#C04820"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">反馈信号</text>
-
-        <path d="M760,80 C760,54 411,54 411,80"
-              fill="none" stroke="#C04820" stroke-width="0.9"
-              stroke-dasharray="4 3" marker-end="url(#lp-arrs)"/>
-        <path d="M760,80 C760,40 240,40 240,80"
-              fill="none" stroke="#C04820" stroke-width="0.9"
-              stroke-dasharray="4 3" marker-end="url(#lp-arrs)"/>
-        <text x="500" y="47" text-anchor="middle" font-size="8.5" fill="#C04820"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">性能数据</text>
-
-        <!-- Mini legend -->
-        <text x="634" y="208" font-size="8.5" fill="#555"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">实线 ──→  数据 / 代码流</text>
-        <text x="634" y="224" font-size="8.5" fill="#555"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">虚线 – –→  选择 / 引用关系</text>
-        <text x="634" y="240" font-size="8.5" fill="#555"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">粗边框 = 本工作原创架构</text>
-
-        <!-- Cross-zone arrows -->
-        <path d="M378,148 Q320,208 270,270"
-              fill="none" stroke="#5E38A0" stroke-width="1.1"
-              stroke-dasharray="5 3.5" marker-end="url(#lp-arr)"/>
-        <text x="352" y="210" font-size="8.5" fill="#5E38A0"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">架构选择</text>
-
-        <line x1="524" y1="270" x2="524" y2="148" stroke="#1A7048" stroke-width="1.4" marker-end="url(#lp-arr)"/>
-        <text x="540" y="218" font-size="8.5" fill="#1A7048"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">注入</text>
-        <text x="540" y="231" font-size="8.5" fill="#1A7048"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">选定架构</text>
-
-        <line x1="530" y1="412" x2="550" y2="412" stroke="#906A00" stroke-width="0.9"
-              stroke-dasharray="4 3" marker-end="url(#lp-arrs)"/>
-        <text x="540" y="406" text-anchor="middle" font-size="7.5" fill="#906A00"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">理论</text>
-        <text x="540" y="420" text-anchor="middle" font-size="7.5" fill="#906A00"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">根基</text>
-
-        <!-- ZONE B -->
-        <rect x="16" y="270" width="514" height="292" rx="10"
-              fill="#F5F0FC" stroke="#B0A0DC" stroke-width="0.8"/>
-        <rect x="16" y="270" width="36" height="24" rx="6" fill="#5E38A0"/>
-        <rect x="34" y="270" width="18" height="24" fill="#5E38A0"/>
-        <text x="34" y="286" text-anchor="middle" font-size="12" font-weight="700"
-              fill="#fff" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">B</text>
-        <text x="62" y="286" font-size="11" font-weight="600" fill="#5E38A0"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">候选架构库（PINN Agent 管理）</text>
-
-        <rect x="36" y="306" width="138" height="58" rx="7"
-              fill="#ECE6F8" stroke="#6B3FA8" stroke-width="0.9"/>
-        <text x="105" y="330" text-anchor="middle" font-size="12" font-weight="700"
-              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">MLP</text>
-        <text x="105" y="350" text-anchor="middle" font-size="9" fill="#6B3FA8"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">标准多层感知机</text>
-
-        <rect x="192" y="306" width="138" height="58" rx="7"
-              fill="#ECE6F8" stroke="#6B3FA8" stroke-width="0.9"/>
-        <text x="261" y="330" text-anchor="middle" font-size="12" font-weight="700"
-              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">KAN</text>
-        <text x="261" y="350" text-anchor="middle" font-size="9" fill="#6B3FA8"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">柯尔莫哥洛夫-阿诺德网络</text>
-
-        <rect x="348" y="306" width="162" height="58" rx="7"
-              fill="#ECE6F8" stroke="#6B3FA8" stroke-width="0.9"/>
-        <text x="429" y="330" text-anchor="middle" font-size="12" font-weight="700"
-              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">Transformer</text>
-        <text x="429" y="350" text-anchor="middle" font-size="9" fill="#6B3FA8"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">基于自注意力机制</text>
-
-        <rect x="36" y="388" width="138" height="58" rx="7"
-              fill="#ECE6F8" stroke="#6B3FA8" stroke-width="0.9"/>
-        <text x="105" y="412" text-anchor="middle" font-size="12" font-weight="700"
-              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">CNN</text>
-        <text x="105" y="432" text-anchor="middle" font-size="9" fill="#6B3FA8"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">卷积神经网络</text>
-
-        <rect x="192" y="388" width="138" height="58" rx="7"
-              fill="#E8DFF6" stroke="#5E38A0" stroke-width="2"/>
-        <text x="261" y="412" text-anchor="middle" font-size="12" font-weight="700"
-              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">CauchyNet</text>
-        <text x="261" y="432" text-anchor="middle" font-size="9" fill="#5E38A0"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">低维 · 高精度</text>
-
-        <rect x="348" y="388" width="162" height="58" rx="7"
-              fill="#E8DFF6" stroke="#5E38A0" stroke-width="2"/>
-        <text x="429" y="412" text-anchor="middle" font-size="12" font-weight="700"
-              fill="#3E2280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">XNet</text>
-        <text x="429" y="432" text-anchor="middle" font-size="9" fill="#5E38A0"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">高维 · 高效 · 超越 PINN</text>
-
-        <line x1="36" y1="464" x2="510" y2="464" stroke="#C0A8E0" stroke-width="0.5" stroke-dasharray="3 3"/>
-        <text x="275" y="479" text-anchor="middle" font-size="9" fill="#5E38A0"
-              font-style="italic" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">★ CauchyNet · XNet 为本工作原创架构，基于柯西积分公式构建</text>
-
-        <!-- ZONE C -->
-        <rect x="550" y="270" width="292" height="292" rx="10"
-              fill="#FDFAEE" stroke="#C8A830" stroke-width="0.8"/>
-        <rect x="550" y="270" width="36" height="24" rx="6" fill="#906A00"/>
-        <rect x="568" y="270" width="18" height="24" fill="#906A00"/>
-        <text x="568" y="286" text-anchor="middle" font-size="12" font-weight="700"
-              fill="#fff" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">C</text>
-        <text x="596" y="286" font-size="11" font-weight="600" fill="#906A00"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">底层数学基础</text>
-
-        <rect x="570" y="306" width="252" height="128" rx="8"
-              fill="#FDF0B0" stroke="#906A00" stroke-width="1.3"/>
-        <text x="696" y="330" text-anchor="middle" font-size="12" font-weight="700"
-              fill="#5A3E00" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">复分析 · 柯西积分公式</text>
-        <text x="696" y="352" text-anchor="middle" font-size="11.5" fill="#7A5500"
-              font-style="italic" font-family="Georgia, 'Times New Roman', serif">f(a) = 1/(2πi) ∮ f(z)/(z−a) dz</text>
-        <line x1="586" y1="364" x2="806" y2="364" stroke="#C8A830" stroke-width="0.6" stroke-dasharray="3 3"/>
-        <text x="696" y="382" text-anchor="middle" font-size="9" fill="#7A5500"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">全纯函数在任意点的精确解析表达</text>
-        <text x="696" y="398" text-anchor="middle" font-size="9" fill="#7A5500"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">→ 超越局部多项式逼近（Taylor/Chebyshev）</text>
-        <text x="696" y="414" text-anchor="middle" font-size="9" fill="#7A5500"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">→ 有限样本点上的高精度积分重构</text>
-
-        <line x1="566" y1="446" x2="836" y2="446" stroke="#DDB840" stroke-width="0.5" stroke-dasharray="2 2"/>
-        <text x="696" y="462" text-anchor="middle" font-size="10" font-weight="600"
-              fill="#906A00" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">理论支撑路径</text>
-        <text x="696" y="480" text-anchor="middle" font-size="9" fill="#7A5500"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">CauchyNet：复数域精确积分层</text>
-        <text x="696" y="498" text-anchor="middle" font-size="9" fill="#7A5500"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">XNet：高维流形上的扩展变换</text>
-        <text x="696" y="519" text-anchor="middle" font-size="9" fill="#906A00"
-              font-style="italic" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">核心主张：超越标准 PINN 基线</text>
-
-        <text x="16" y="572" font-size="9.5" fill="#888"
-              font-family="Helvetica Neue, Helvetica, Arial, sans-serif">Figure 1</text>
-      </svg>
-
-      <div class="figure-caption">
-        <b>Figure 1 | Lang-PINN 系统架构总览。</b>
-        (A) <b>核心推理流程</b>：用户自然语言经 <i>PDE Agent</i> 解析为符号偏微分方程（含周期性、几何与多尺度特征），
-        <i>PINN Agent</i> 从候选架构库中选取最优网络结构，<i>Code Agent</i> 生成模块化求解代码，
-        <i>Feedback Agent</i> 执行闭环评估并将误差与收敛性能数据反馈至 PDE Agent 与 PINN Agent，驱动迭代优化。
-        (B) <b>候选架构库</b>：涵盖 MLP、KAN、Transformer、CNN 四类通用架构，以及 CauchyNet 与 XNet 两类原创架构（粗框标注）；
-        PINN Agent 通过虚线选择通道管理架构库，选定架构经实线通道注入 Code Agent。
-        (C) <b>底层数学基础</b>：复分析中的柯西积分公式为 CauchyNet 与 XNet 提供理论支撑，实现对全纯函数在任意点的精确解析表达，
-        在近似精度上超越基于局部多项式的标准 PINN 方法。
-        实线箭头 = 数据 / 代码流；虚线箭头 = 选择 / 引用关系；粗边框节点 = 本工作原创贡献。
+    <!-- header -->
+    <div class="arch-header">
+      <div style="display:flex;justify-content:center;margin-bottom:20px">
+        <div class="arch-eyebrow"><div class="arch-eyebrow-dot"></div>Platform Architecture</div>
       </div>
+      <div class="arch-h1">Describe the problem.<br><em>Get physics-grade results.</em></div>
+      <p class="arch-subhead">CauchyX AI orchestrates a multi-agent pipeline — from natural language input to validated PDE solutions — with no mesh generation, no manual coding, no expert bottleneck.</p>
     </div>
+
+    <div class="diagram">
+
+      <!-- 01 Input -->
+      <div class="arch-section-label">
+        <div class="sl-line"></div><div class="sl-text">01 &nbsp; Input</div><div class="sl-line"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-chip"><div class="ic-icon">💬</div><div><div class="ic-label">Natural Language</div><div class="ic-desc">Plain-text problem description</div></div></div>
+        <div class="input-chip"><div class="ic-icon">📊</div><div><div class="ic-label">Data / Tables</div><div class="ic-desc">CSV, experimental measurements</div></div></div>
+        <div class="input-chip"><div class="ic-icon">📄</div><div><div class="ic-label">Documents</div><div class="ic-desc">PDF papers, CAD sketches</div></div></div>
+        <div class="input-chip"><div class="ic-icon">🔗</div><div><div class="ic-label">API / SDK</div><div class="ic-desc">Programmatic integration</div></div></div>
+      </div>
+
+      <div class="vert-connect"><div class="vc-dot"></div><div class="vc-line"></div><div class="vc-arrow"></div></div>
+
+      <!-- 02 AI Core -->
+      <div class="arch-section-label">
+        <div class="sl-line"></div><div class="sl-text">02 &nbsp; AI Orchestration Core</div><div class="sl-line"></div>
+      </div>
+      <div class="agent-core">
+        <div class="agent-title">
+          <div class="agent-badge">∮</div>
+          <div>
+            <div class="agent-name">PDE-Agent · Multi-Agent Framework</div>
+            <div class="agent-sub">Planner · Parser · Executor · Orchestrator</div>
+          </div>
+        </div>
+        <div class="agent-inner">
+          <div class="agent-module">
+            <div class="m-icon">🧠</div>
+            <div class="m-name">Intent Understanding</div>
+            <div class="m-desc">Extracts PDE type, geometry, boundary conditions, material parameters, and solve objectives from unstructured input.</div>
+            <span class="module-tag mtag-cyan">NLP · Entity Extraction</span>
+          </div>
+          <div class="agent-module">
+            <div class="m-icon">📐</div>
+            <div class="m-name">Physics Modeling Engine</div>
+            <div class="m-desc">Auto-generates governing equations, constitutive relations, and boundary condition structures ready for the solver.</div>
+            <span class="module-tag mtag-emerald">PDE · BC · IC</span>
+          </div>
+          <div class="agent-module">
+            <div class="m-icon">📋</div>
+            <div class="m-name">Task Planning</div>
+            <div class="m-desc">Decomposes the problem into ordered subtasks, selects the optimal solver strategy, and manages execution dependencies.</div>
+            <span class="module-tag mtag-violet">Prog-Act · Dual-Loop</span>
+          </div>
+        </div>
+        <div class="prog-act-strip">
+          <div class="pa-label">Prog-Act Framework</div>
+          <div class="pa-items">
+            <div class="pa-item">Inner Loop: localized error correction</div>
+            <div class="pa-item">Outer Loop: global plan revision</div>
+            <div class="pa-item">Graph Memory: dependency tracing</div>
+            <div class="pa-item">Resource Pool: runtime artifacts</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vert-connect"><div class="vc-dot"></div><div class="vc-line"></div><div class="vc-arrow"></div></div>
+
+      <!-- 03 Solver -->
+      <div class="arch-section-label">
+        <div class="sl-line"></div><div class="sl-text">03 &nbsp; Solver Engine</div><div class="sl-line"></div>
+      </div>
+      <div class="solver-row">
+        <div class="solver-card sc-cauchy">
+          <div class="solver-icon">∮</div>
+          <div class="solver-name">CauchyNet</div>
+          <div class="solver-sub">Cauchy Integral basis. Width-first architecture. Two-phase optimizer: Adam → L-BFGS.</div>
+          <div><span class="solver-star star-emerald">★ CauchyX Core</span></div>
+        </div>
+        <div class="solver-card sc-pinn">
+          <div class="solver-icon">🕸</div>
+          <div class="solver-name">PINNs</div>
+          <div class="solver-sub">Physics-Informed Neural Networks. PDE residuals embedded directly in the loss function.</div>
+          <div><span class="solver-star star-cyan">Auto-diff · Mesh-free</span></div>
+        </div>
+        <div class="solver-card sc-op">
+          <div class="solver-icon">〰</div>
+          <div class="solver-name">Neural Operator</div>
+          <div class="solver-sub">FNO / DeepONet. Operator learning for fast parametric inference across geometry families.</div>
+        </div>
+        <div class="solver-card sc-classic">
+          <div class="solver-icon">⊞</div>
+          <div class="solver-name">Classical FEM/FDM</div>
+          <div class="solver-sub">Mesh-based discretization for cases where mature numerical methods are most reliable.</div>
+        </div>
+        <div class="solver-card sc-hybrid">
+          <div class="solver-icon">⊕</div>
+          <div class="solver-name">Hybrid Ensemble</div>
+          <div class="solver-sub">Agent-selected fusion of multiple methods. Combines accuracy and generalization.</div>
+        </div>
+      </div>
+
+      <div class="vert-connect"><div class="vc-dot"></div><div class="vc-line"></div><div class="vc-arrow"></div></div>
+
+      <!-- 04 Output -->
+      <div class="arch-section-label">
+        <div class="sl-line"></div><div class="sl-text">04 &nbsp; Output</div><div class="sl-line"></div>
+      </div>
+      <div class="output-row">
+        <div class="output-card"><div class="out-icon">🌡</div><div><div class="out-name">Field Visualization</div><div class="out-desc">Temperature contours, vector fields, streamlines, 3D isosurfaces.</div></div></div>
+        <div class="output-card"><div class="out-icon">📉</div><div><div class="out-name">Numerical Data</div><div class="out-desc">CSV, VTK exports. Time-history curves. Sensitivity analysis reports.</div></div></div>
+        <div class="output-card"><div class="out-icon">💻</div><div><div class="out-name">Reproducible Code</div><div class="out-desc">Full Python / MATLAB source. COMSOL / ANSYS script export.</div></div></div>
+        <div class="output-card"><div class="out-icon">📋</div><div><div class="out-name">Physics Report</div><div class="out-desc">Uncertainty quantification, conservation checks, design recommendations.</div></div></div>
+      </div>
+
+    </div><!-- /diagram -->
   </div>
 
   <div class="metrics reveal" role="list" aria-label="Key performance metrics">
