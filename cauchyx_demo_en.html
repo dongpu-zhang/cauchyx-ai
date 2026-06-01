@@ -693,16 +693,14 @@ BC completeness check: PASS · Physical validity: PASS
 Architecture: Width-First PINN  (Cauchy Integral Basis)<br>
 Depth: 5 layers  (avoids deep-layer gradient vanishing)<br>
 Width: 256 neurons / layer<br>
-Activation: Tanh (hidden) + Linear (output)<br>
 Input: [x, y, z]  →  Output: T(x, y, z)<br>
 Parameters: ~330 K  ·  Full-domain receptive field
 </div>
 <div class="code-block">
 <div class="code-header"><span>Python · CauchyNet</span>cauchynet_thermal.py</div>
-<pre><span class="cm"># Width-first PINN: avoids deep gradient decay</span>
+<pre><span class="cm"># CauchyNet: width-first PINN solver</span>
 <span class="kw">net</span> = <span class="fn">CauchyNet</span>(
   layers=[<span class="num">3</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">1</span>],
-  activation=<span class="str">'tanh'</span>,
   cauchy_order=<span class="num">4</span>
 )
 <span class="cm"># Multi-objective physics loss</span>

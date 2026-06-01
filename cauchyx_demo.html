@@ -949,7 +949,6 @@ BC 完整性检查: PASS · 物理合法性: PASS
 架构: Width-First PINN (Cauchy Integral Basis)<br>
 层数: 5 层 (避免深层梯度消失)<br>
 宽度: 256 neurons/layer<br>
-激活: Tanh (隐层) + Linear (输出层)<br>
 输入: [x, y, z] → 输出: T(x,y,z)<br>
 参数量: ~330K · 感受野覆盖全域
 </div>
@@ -958,7 +957,6 @@ BC 完整性检查: PASS · 物理合法性: PASS
 <pre><span class="cm"># CauchyNet: width-first PINN solver</span>
 <span class="kw">net</span> = <span class="fn">CauchyNet</span>(
   layers=[<span class="num">3</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">256</span>, <span class="num">1</span>],
-  activation=<span class="str">'tanh'</span>,
   cauchy_order=<span class="num">4</span>
 )
 <span class="cm"># Multi-objective loss</span>
