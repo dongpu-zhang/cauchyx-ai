@@ -1011,6 +1011,118 @@
   .demo-card-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
   .demo-card-actions { display: flex; gap: 0.75rem; flex-shrink: 0; flex-wrap: wrap; }
 
+  /* ── OSS download card ── */
+  .oss-card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg2);
+    border-top: 2px solid var(--gold);
+    margin-bottom: 2.5rem;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .oss-card:hover { border-color: #2e3347; }
+  .oss-header {
+    padding: 1.5rem 2rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .oss-title {
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.01em;
+  }
+  .oss-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 0.6rem;
+  }
+  .oss-actions { display: flex; gap: 0.75rem; flex-shrink: 0; flex-wrap: wrap; align-items: flex-start; }
+  .btn-ghost {
+    display: inline-block;
+    padding: 0.55rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--fg);
+    text-decoration: none;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+  .install-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+  @media(max-width:680px){ .install-grid { grid-template-columns: 1fr; } }
+  .install-block {
+    background: var(--bg2);
+    padding: 1.2rem 2rem;
+  }
+  .install-step {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+  }
+  .install-code {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: #a8d8a8;
+    background: #0a0f1e;
+    border: 1px solid #1a2035;
+    border-radius: 3px;
+    padding: 0.7rem 0.9rem;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .install-comment { color: #4a5568; }
+  .install-cmd { color: #68d391; }
+  .install-str { color: #f6ad55; }
+  .pde-example-row {
+    border-top: 1px solid var(--border);
+    padding: 1.2rem 2rem;
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .pde-example-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 0.5rem;
+  }
+  .pde-example-item {
+    flex: 1;
+    min-width: 220px;
+  }
+  .pde-prompt {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    background: #0a0f1e;
+    border: 1px solid #1a2035;
+    border-radius: 3px;
+    padding: 0.55rem 0.9rem;
+    color: #a0aec0;
+    margin-bottom: 0.4rem;
+  }
+  .pde-prompt .kw { color: var(--cyan); }
+  .pde-prompt .val { color: var(--gold); }
+
   .demo-lang-btn {
     display: flex;
     align-items: center;
@@ -1813,6 +1925,86 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Open-source PDE Agent for Claude Code ── -->
+  <div class="oss-card reveal">
+
+    <!-- header row -->
+    <div class="oss-header">
+      <div>
+        <p class="oss-title">
+          <span style="color:var(--gold)">&#x2913;</span>&nbsp; CauchyX PDE Agent &mdash; Open Source for Claude Code
+        </p>
+        <p class="oss-desc">
+          Solve any PDE in plain English or Chinese, directly inside a Claude Code conversation.
+          FDM solvers &middot; CauchyNet PINN &middot; NVIDIA PhysicsNeMo backend &middot; inline plots.
+          MIT license &mdash; free to use, fork, and extend.
+        </p>
+        <div class="demo-card-tags">
+          <span class="layer-tag tag-gold">Open Source · MIT</span>
+          <span class="layer-tag tag-cyan">Claude Code Skill</span>
+          <span class="layer-tag tag-purple">FDM + PINN + PhysicsNeMo</span>
+          <span class="layer-tag tag-cyan">Python · PyTorch</span>
+        </div>
+      </div>
+      <div class="oss-actions">
+        <a href="https://github.com/dongpu-zhang/cauchyx-ai/tree/main/pde-agent"
+           target="_blank" rel="noopener" class="btn-primary"
+           style="display:inline-block;text-align:center">
+          &#8599;&nbsp; GitHub
+        </a>
+        <a href="https://github.com/dongpu-zhang/cauchyx-ai/blob/main/pde-agent/README.md"
+           target="_blank" rel="noopener" class="btn-ghost">
+          README
+        </a>
+        <a href="https://raw.githubusercontent.com/dongpu-zhang/cauchyx-ai/main/pde-agent/pde_solver.py"
+           target="_blank" rel="noopener" class="btn-ghost">
+          pde_solver.py
+        </a>
+      </div>
+    </div>
+
+    <!-- install steps -->
+    <div class="install-grid">
+      <div class="install-block">
+        <p class="install-step">Step 1 — Install dependencies</p>
+        <div class="install-code"><span class="install-comment"># Python 3.9+</span>
+<span class="install-cmd">pip install</span> numpy scipy matplotlib torch</div>
+      </div>
+      <div class="install-block">
+        <p class="install-step">Step 2 — Add the Claude Code skill</p>
+        <div class="install-code"><span class="install-comment"># macOS / Linux</span>
+<span class="install-cmd">cp</span> pde-agent/commands/pde.md ~/.claude/commands/
+
+<span class="install-comment"># Windows PowerShell</span>
+<span class="install-cmd">Copy-Item</span> pde-agent\commands\pde.md <span class="install-str">$env:USERPROFILE</span>\.claude\commands\</div>
+      </div>
+    </div>
+
+    <!-- usage examples -->
+    <div class="pde-example-row">
+      <div class="pde-example-item">
+        <p class="pde-example-label">Example invocations in Claude Code</p>
+        <div class="pde-prompt"><span class="kw">/pde</span> heat equation <span class="val">alpha=0.01</span> on [0,1] until <span class="val">t=0.5</span> IC=sin(pi*x)</div>
+        <div class="pde-prompt"><span class="kw">/pde</span> wave equation <span class="val">c=1.5</span> on [0,2] IC=sin(pi*x) zero BC until <span class="val">t=3</span></div>
+        <div class="pde-prompt"><span class="kw">/pde</span> Burgers equation <span class="val">nu=0.005</span> periodic BC IC=-sin(pi*x) until <span class="val">t=1</span></div>
+        <div class="pde-prompt"><span class="kw">/pde</span> 2D Poisson on unit square zero Dirichlet BC</div>
+        <div class="pde-prompt"><span class="kw">/pde</span> <span class="val">CauchyNet</span> heat 1D <span class="val">alpha=0.01</span> on [0,1] <span class="val">t=0.5</span></div>
+      </div>
+      <div class="pde-example-item">
+        <p class="pde-example-label">Supported PDE types</p>
+        <div class="pde-prompt"><span class="kw">heat</span> · <span class="kw">wave</span> · <span class="kw">poisson</span> · <span class="kw">burgers</span>
+<span class="kw">advection</span> · <span class="kw">allen-cahn</span> · <span class="kw">ode</span>
+<span class="val">CauchyNet PINN</span> (PyTorch Cauchy activation)
+<span class="val">PhysicsNeMo</span> (NVIDIA Modulus backend)
+1D &amp; 2D &nbsp;·&nbsp; Dirichlet / Neumann / periodic BC</div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:0.6rem">
+          After running, the solution plot is displayed inline in your Claude Code conversation.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /.oss-card -->
 
   <!-- Key product metrics row -->
   <div class="metrics reveal" role="list" aria-label="PDE Agent product metrics">
