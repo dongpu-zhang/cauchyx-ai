@@ -1,0 +1,76 @@
+CauchyX AI — 自定义域名配置步骤
+www.cauchyx.ai → GitHub Pages (dongpu-zhang.github.io)
+生成时间：June 2026
+============================================================
+
+STEP 1 — DNS 控制台（域名注册商后台）
+--------------------------------------------------------------
+在 cauchyx.ai 的 DNS 控制台添加以下记录：
+
+【www 子域 — CNAME 记录】
+  Type : CNAME
+  Host : www
+  Value: dongpu-zhang.github.io    ← 注意：不含协议、不含路径
+  TTL  : 3600
+
+【裸域 apex — A 记录（共4条，让 cauchyx.ai 也生效）】
+  Type : A    Host : @    Value : 185.199.108.153
+  Type : A    Host : @    Value : 185.199.109.153
+  Type : A    Host : @    Value : 185.199.110.153
+  Type : A    Host : @    Value : 185.199.111.153
+
+注意事项：
+  - CNAME 值只能是 dongpu-zhang.github.io
+  - 不能写 https://dongpu-zhang.github.io
+  - 不能写 dongpu-zhang.github.io/cauchyx-ai/
+
+
+STEP 2 — 仓库根目录添加 CNAME 文件
+--------------------------------------------------------------
+在仓库根目录创建文件，文件名：CNAME（无扩展名）
+文件内容（只有一行）：
+
+  www.cauchyx.ai
+
+此文件已创建于 D:\claudecode\CNAME
+执行以下命令推送到 GitHub：
+
+  git add CNAME
+  git commit -m "Add custom domain CNAME for www.cauchyx.ai"
+  git push
+
+
+STEP 3 — GitHub Pages 后台设置
+--------------------------------------------------------------
+1. 进入 GitHub 仓库页面
+2. 点击 Settings → Pages（左侧菜单）
+3. Custom domain 输入框填写：www.cauchyx.ai
+4. 点击 Save，等待 DNS 验证（5–30 分钟）
+5. DNS 验证通过后，勾选 Enforce HTTPS
+
+
+STEP 4 — 验证
+--------------------------------------------------------------
+DNS 传播后（最长 24 小时，通常 1–2 小时）：
+
+检查 DNS 是否生效：
+  nslookup www.cauchyx.ai
+  （应返回 CNAME → dongpu-zhang.github.io）
+
+浏览器访问：
+  https://www.cauchyx.ai      → 应正常显示网站
+  https://cauchyx.ai          → 应自动跳转到 www.cauchyx.ai
+
+
+常见问题
+--------------------------------------------------------------
+Q: DNS 设置后仍显示"域名未验证"？
+A: DNS 传播需要时间，等 1 小时后刷新 GitHub Pages 设置页面。
+
+Q: HTTPS 勾选不了？
+A: 必须等 DNS 验证通过才能勾选，不要急，验证通过会自动解锁。
+
+Q: cauchyx.ai（不带 www）访问报错？
+A: 确认 A 记录的 4 个 IP 都已添加；GitHub Pages 会自动将裸域重定向到 www。
+
+============================================================

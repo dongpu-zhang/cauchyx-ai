@@ -419,6 +419,29 @@
   tr:hover td { background: var(--bg2); }
   .col-label { color: var(--muted); font-size: 0.82rem; }
 
+  /* ─── VENDOR COMPARE ─────────────────────────────────── */
+  .cmp-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 1.5rem; }
+  .cmp-wrap table { min-width: 680px; }
+  .cmp-wrap th { white-space: nowrap; }
+  .cmp-wrap th.cmp-px { border-top: 2px solid var(--purple); color: #a78bfa; }
+  .cmp-wrap th.cmp-em { border-top: 2px solid var(--gold);   color: #d4a017; }
+  .cmp-wrap th.cmp-cx { border-top: 2px solid var(--cyan);   color: var(--cyan); }
+  .cmp-wrap td.cmp-cx { color: var(--text); }
+  .cmp-wrap td.cmp-win { color: #4ade80; font-weight: 500; }
+  .cmp-note { font-size: 0.78rem; color: var(--muted); margin-top: 1rem; line-height: 1.6; }
+  .status-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .status-b    { background: rgba(139,92,246,0.15);  color: #a78bfa; }
+  .status-acq  { background: rgba(212,160,23,0.15);  color: var(--gold); }
+  .status-seed { background: rgba(0,204,238,0.15);   color: var(--cyan); }
+
   /* ─── MARKET ──────────────────────────────────────────── */
   .market-grid {
     display: grid;
@@ -1339,6 +1362,7 @@
     <li><a href="#product">Product</a></li>
     <li><a href="#papers">Papers</a></li>
     <li><a href="#founders">Founders</a></li>
+    <li><a href="#compare">Compare</a></li>
     <li><a href="#market">Market</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#demo" class="nav-demo-link">Demo</a></li>
@@ -2235,6 +2259,122 @@
       </tbody>
     </table>
   </div>
+</section>
+
+<hr class="sep">
+
+<!-- ── VENDOR COMPARE ────────────────────────────────────── -->
+<section id="compare">
+  <p class="section-label reveal">Competitive Landscape</p>
+  <h2 class="reveal">CauchyX vs. PhysicsX vs. Emmi AI</h2>
+  <p style="color:var(--muted);font-size:0.9rem;max-width:600px;margin-bottom:0.5rem" class="reveal">
+    Three companies. Three theses. PhysicsX raised $155M on surrogate speed. Emmi AI was acquired by Mistral
+    for its large-mesh CFD transformer. CauchyX is built on a different foundation: provable accuracy,
+    regulatory compliance, and natural language — the only platform you can prove to your regulator.
+  </p>
+
+  <div class="cmp-wrap reveal">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th class="cmp-px">PhysicsX</th>
+          <th class="cmp-em">Emmi AI → Mistral</th>
+          <th class="cmp-cx">CauchyX AI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-label">Founded</td>
+          <td>2021</td>
+          <td>2024</td>
+          <td class="cmp-cx">2026</td>
+        </tr>
+        <tr>
+          <td class="col-label">HQ</td>
+          <td>London, UK</td>
+          <td>Linz, Austria → Paris</td>
+          <td class="cmp-cx">Santa Clara, CA</td>
+        </tr>
+        <tr>
+          <td class="col-label">Status</td>
+          <td><span class="status-tag status-b">Series B · ~$1B valuation</span></td>
+          <td><span class="status-tag status-acq">Acquired by Mistral · May 2026</span></td>
+          <td class="cmp-cx"><span class="status-tag status-seed">Angel / Pre-Seed · Raising</span></td>
+        </tr>
+        <tr>
+          <td class="col-label">Total Funding</td>
+          <td>&gt;$155M</td>
+          <td>~$17M → acquired</td>
+          <td class="cmp-cx">Raising</td>
+        </tr>
+        <tr>
+          <td class="col-label">Team Size</td>
+          <td>150+</td>
+          <td>30+ (→ Mistral)</td>
+          <td class="cmp-cx">Core founding team</td>
+        </tr>
+        <tr>
+          <td class="col-label">Technology</td>
+          <td>Neural Operators · data-driven surrogate</td>
+          <td>AB-UPT Transformer · mesh-free CFD</td>
+          <td class="cmp-cx">Cauchy activation · compleX-PINN · XNet</td>
+        </tr>
+        <tr>
+          <td class="col-label">Theoretical Basis</td>
+          <td>Engineering empiricism + deep learning</td>
+          <td>Transformer architecture</td>
+          <td class="cmp-cx cmp-win">Rigorous O(N<sup>−r</sup>) convergence proof, any r &gt; 0</td>
+        </tr>
+        <tr>
+          <td class="col-label">Accuracy Benchmark</td>
+          <td>10×–1,000× simulation speedup</td>
+          <td>100M+ mesh cell CFD</td>
+          <td class="cmp-cx cmp-win">Poisson MSE <strong>20,000×</strong> lower than MLP PINN (NeurIPS 2025)</td>
+        </tr>
+        <tr>
+          <td class="col-label">Peer-Reviewed Papers</td>
+          <td>Primarily internal</td>
+          <td>1 (AB-UPT)</td>
+          <td class="cmp-cx cmp-win">3 — NeurIPS 2025 · Neural Networks 2025</td>
+        </tr>
+        <tr>
+          <td class="col-label">NVIDIA Relationship</td>
+          <td>NVentures $20M strategic investment</td>
+          <td>None</td>
+          <td class="cmp-cx">Inception Member · PhysicsNeMo native</td>
+        </tr>
+        <tr>
+          <td class="col-label">Compliance / Audit Trail</td>
+          <td style="color:#4b5563">✗ None</td>
+          <td style="color:#4b5563">✗ None</td>
+          <td class="cmp-cx cmp-win">✓ O-PINN · DO-178C · ISO 26262 · FDA</td>
+        </tr>
+        <tr>
+          <td class="col-label">Natural Language Input</td>
+          <td style="color:#4b5563">✗</td>
+          <td style="color:#4b5563">✗</td>
+          <td class="cmp-cx cmp-win">✓ PDE Agent</td>
+        </tr>
+        <tr>
+          <td class="col-label">Open Source</td>
+          <td style="color:#4b5563">✗</td>
+          <td style="color:#4b5563">✗</td>
+          <td class="cmp-cx cmp-win">✓ pde-agent on GitHub</td>
+        </tr>
+        <tr>
+          <td class="col-label">Target Market</td>
+          <td>Europe-first · expanding North America</td>
+          <td>Europe → Mistral global</td>
+          <td class="cmp-cx">North America · Asia-Pacific</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="cmp-note">
+    * PhysicsX figures from Series B press release (June 2025) and NVentures announcement.
+    Emmi AI acquired by Mistral AI, May 2026. CauchyX accuracy benchmarks from NeurIPS 2025 proceedings.
+  </p>
 </section>
 
 <hr class="sep">
