@@ -483,6 +483,70 @@
   .onto-pill.o  { color: var(--cyan); border-color: rgba(0,204,238,0.4); }
   .onto-pill.s  { color: #4ade80; border-color: rgba(74,222,128,0.4); }
 
+  .onto-links { margin-top: 2.5rem; }
+  .onto-links-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .onto-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 0.75rem;
+  }
+  .onto-link-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(0,204,238,0.18);
+    border-radius: 8px;
+    background: rgba(0,204,238,0.04);
+    text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .onto-link-card:hover {
+    border-color: rgba(0,204,238,0.5);
+    background: rgba(0,204,238,0.09);
+  }
+  .onto-link-icon {
+    font-size: 1.1rem;
+    color: var(--cyan);
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+  }
+  .onto-link-body { display: flex; flex-direction: column; gap: 0.2rem; }
+  .onto-link-title {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--cyan);
+    font-weight: 600;
+  }
+  .onto-link-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .onto-install {
+    margin-top: 1.25rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 0.7rem 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .onto-install code {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: #b2eaf0;
+    white-space: nowrap;
+  }
+
   /* ─── MARKET ──────────────────────────────────────────── */
   .market-grid {
     display: grid;
@@ -2272,6 +2336,58 @@
     <span class="onto-pill o">rdflib + pyshacl</span>
     <span class="onto-pill o">SPARQL hallucination_check</span>
     <span class="onto-pill s">8/8 integration tests passing</span>
+  </div>
+
+  <!-- Source links -->
+  <div class="onto-links reveal">
+    <p class="onto-links-label">Open Source — MIT License</p>
+    <div class="onto-links-grid">
+      <a class="onto-link-card" href="https://github.com/dongpu-zhang/cauchyx-ai/tree/main/pde-agent" target="_blank" rel="noopener">
+        <span class="onto-link-icon">⊞</span>
+        <span class="onto-link-body">
+          <span class="onto-link-title">pde-agent/</span>
+          <span class="onto-link-sub">Full source — ontology, SPARQL, Python</span>
+        </span>
+      </a>
+      <a class="onto-link-card" href="https://github.com/dongpu-zhang/cauchyx-ai/blob/main/pde-agent/ontology/pde_core.ttl" target="_blank" rel="noopener">
+        <span class="onto-link-icon">◈</span>
+        <span class="onto-link-body">
+          <span class="onto-link-title">pde_core.ttl</span>
+          <span class="onto-link-sub">OWL-DL ontology · QUDT + PROV-O inlined</span>
+        </span>
+      </a>
+      <a class="onto-link-card" href="https://github.com/dongpu-zhang/cauchyx-ai/blob/main/pde-agent/sparql/hallucination_check.rq" target="_blank" rel="noopener">
+        <span class="onto-link-icon">⚡</span>
+        <span class="onto-link-body">
+          <span class="onto-link-title">hallucination_check.rq</span>
+          <span class="onto-link-sub">SPARQL anti-hallucination query</span>
+        </span>
+      </a>
+      <a class="onto-link-card" href="https://github.com/dongpu-zhang/cauchyx-ai/blob/main/pde-agent/shapes/pde_constraints.shacl" target="_blank" rel="noopener">
+        <span class="onto-link-icon">◎</span>
+        <span class="onto-link-body">
+          <span class="onto-link-title">pde_constraints.shacl</span>
+          <span class="onto-link-sub">Physical parameter range validation</span>
+        </span>
+      </a>
+      <a class="onto-link-card" href="https://github.com/dongpu-zhang/cauchyx-ai/blob/main/pde-agent/src/ontology_router.py" target="_blank" rel="noopener">
+        <span class="onto-link-icon">→</span>
+        <span class="onto-link-body">
+          <span class="onto-link-title">ontology_router.py</span>
+          <span class="onto-link-sub">JSON → validate → route → PROV-O</span>
+        </span>
+      </a>
+      <a class="onto-link-card" href="https://github.com/dongpu-zhang/cauchyx-ai/blob/main/pde-agent/test_ontology.py" target="_blank" rel="noopener">
+        <span class="onto-link-icon">✓</span>
+        <span class="onto-link-body">
+          <span class="onto-link-title">test_ontology.py</span>
+          <span class="onto-link-sub">8/8 integration tests — run locally</span>
+        </span>
+      </a>
+    </div>
+    <p class="onto-install reveal">
+      <code>pip install rdflib pyshacl &amp;&amp; git clone https://github.com/dongpu-zhang/cauchyx-ai.git &amp;&amp; python cauchyx-ai/pde-agent/test_ontology.py</code>
+    </p>
   </div>
 </section>
 
