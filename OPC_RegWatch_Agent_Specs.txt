@@ -1,0 +1,963 @@
+================================================================================
+RegWatch — 9 个 Agent 功能接口规格 · 第三方评估 · 开发决策
+Agent Interface Specifications · Third-Party Assessment · Build vs Buy
+================================================================================
+
+生成日期：2026-06-02
+图例：🟢 直接使用  🟡 轻度定制（< 1周）  🔴 需要开发（> 1周）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+总览：9 Agent 开发决策一览
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  编号  Agent 名称              状态  第三方方案                  定制内容
+  ─────────────────────────────────────────────────────────────────────────────
+  ①    Planner Agent           🟡    LangGraph / CrewAI          RegWatch Prompt + 记忆 Schema
+  ②    RegScanner Agent        🟡    Firecrawl + Apify           法规变更 Diff 检测逻辑
+  ③    LegalInterpreter Agent  🔴    Claude API（MVP）            专家语料微调（生产级）
+  ④    RiskMapper Agent        🔴    LangChain SQL Agent（基础）   餐馆匹配规则引擎
+  ⑤    AlertComposer Agent     🟡    Claude API                  合规预警 Prompt 模板库
+  ⑥    Critic Agent            🟡    Claude-as-Judge             合规评分 Rubric 定义
+  ⑦    Dispatcher Agent        🟢    Resend + Twilio             路由规则（1 天）
+  ⑧    Memory Agent            🟡    Mem0 / Zep                  法规版本追踪 Schema
+  ⑨    QA Agent                🟡    OpenAI Assistants API       知识库上传 + 升级路由
+
+  编排层（所有 Agent 的调度）  🟡    LangGraph                   RegWatch 状态机定义
+
+  ─────────────────────────────────────────────────────────────────────────────
+  整体工作量估算
+    🟢 零开发（直接调 API）：Dispatcher 核心（Resend + Twilio）
+    🟡 轻度定制（共 6 个）：约 3–4 周
+    🔴 需要开发（共 2 个）：LegalInterpreter 微调 + RiskMapper 规则引擎，约 3–4 周
+    编排层：1–2 周
+    合计：7–10 周可上线 MVP
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+① Planner Agent — 任务规划
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+职责：每周读取长期记忆，生成本周 RegScanner 扫描任务清单
+
+──── 输入接口 ────────────────────────────────────────────────────────────────
+
+触发方式
+  · OPC Cron 每周一 06:00 UTC HTTP POST 调用
+  · 或专家在控制台点击"立即触发"（手动 POST）
+
+输入数据结构（JSON）
+  {
+    "trigger": "cron" | "manual",
+    "expert_id": "expert_uuid",
+    "service_id": "regwatch_001",
+    "config": {
+      "states": ["CA", "TX"],           // 监控州列表
+      "sources": [                       // 监控来源配置
+        {"name": "EPA", "url": "https://www.epa.gov/newsroom", "type": "rss"},
+        {"name": "CalRecycle", "url": "https://calrecycle.ca.gov/rss", "type": "rss"},
+        {"name": "CDPH", "url": "...", "type": "html"},
+        {"name": "TCEQ", "url": "...", "type": "html"}
+      ],
+      "keywords": ["restaurant","food service","grease","wastewater","organic waste"],
+      "scan_depth_days": 14             // 检查过去 14 天的发布内容
+    }
+  }
+
+从记忆读取（ChromaDB / Mem0）
+  · 上周已发现的法规 ID 列表（去重用）
+  · 各来源上次成功扫描时间戳
+  · 本月已推送法规摘要（避免重复预警）
+
+──── 输出接口 ────────────────────────────────────────────────────────────────
+
+输出数据结构（JSON，传递给 RegScanner）
+  {
+    "session_id": "session_uuid",
+    "week": "2026-W23",
+    "tasks": [
+      {
+        "task_id": "t001",
+        "source": "EPA",
+        "url": "https://www.epa.gov/newsroom",
+        "type": "rss",
+        "keywords": ["restaurant","food service","grease"],
+        "last_seen_id": "EPA-2026-06-01-042",  // 增量扫描起点
+        "priority": "high"
+      },
+      ...
+    ],
+    "known_reg_ids": ["EPA-40CFR453-2026-05", ...],  // 已知，跳过
+    "created_at": "2026-06-08T06:01:00Z"
+  }
+
+──── 第三方方案评估 ────────────────────────────────────────────────────────────
+
+可直接使用的框架
+  · LangGraph（推荐）：用 StateGraph 定义 Planner 节点，内置状态持久化
+    - 优点：天然支持 Think→Do→Check→Improve 循环，有记忆接口
+    - 接入方式：pip install langgraph，定义 PlannerNode
+  · CrewAI：定义 Planner 角色和 Goal，自动分解任务
+    - 优点：内置角色系统，适合多 Agent 协作
+    - 缺点：定制性较 LangGraph 差
+
+需要定制的部分
+  · RegWatch 专属 Prompt（中英双语，理解合规场景）
+  · 记忆 Schema（法规 ID 格式、来源优先级）
+  · 增量扫描逻辑（last_seen_id 追踪）
+
+状态：🟡 轻度定制 — 1 周内可完成
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+② RegScanner Agent — 法规抓取
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+职责：抓取政府网站，识别新增/变更的法规条目
+
+──── 输入接口 ────────────────────────────────────────────────────────────────
+
+接收 Planner 输出的 tasks 数组，逐任务执行
+
+  单任务输入
+  {
+    "task_id": "t001",
+    "source": "EPA",
+    "url": "https://www.epa.gov/newsroom",
+    "type": "rss" | "html" | "pdf_list",
+    "keywords": ["restaurant", "food service"],
+    "last_seen_id": "EPA-2026-06-01-042"
+  }
+
+──── 输出接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "scan_id": "scan_uuid",
+    "source": "EPA",
+    "scanned_at": "2026-06-08T06:18:00Z",
+    "findings": [
+      {
+        "reg_id": "EPA-40CFR453-2026-06-05",
+        "title": "Final Rule - Supplemental Effluent Limitations for Food Service",
+        "published_date": "2026-06-05",
+        "effective_date": "2026-09-05",
+        "status": "NEW" | "UPDATED" | "WITHDRAWN",
+        "url": "https://www.epa.gov/...",
+        "raw_text": "...法规原文全文...",
+        "pdf_url": "https://...",         // 如有 PDF
+        "keywords_matched": ["food service", "grease"]
+      }
+    ],
+    "no_change": false,
+    "error": null
+  }
+
+──── 第三方方案评估 ────────────────────────────────────────────────────────────
+
+可直接使用（推荐方案）
+  · Firecrawl（firecrawl.dev）🟢
+    - 功能：专业网页抓取，自动处理 JS 渲染、反爬、内容结构化
+    - 接入：POST https://api.firecrawl.dev/v1/scrape，传 URL 返回 Markdown
+    - 价格：$16/月 starter（足够 RegWatch 规模）
+    - 适合：HTML 类政府网站（CDPH、TCEQ）
+
+  · Apify（apify.com）🟢
+    - 功能：有预制的 EPA.gov、FDA.gov 爬虫（Actor）
+    - 接入：Apify Client SDK，调用现成 Actor
+    - 优势：有 EPA RSS 解析 Actor，直接获取结构化法规数据
+    - 价格：按计算单元收费，RegWatch 规模约 $10/月
+
+  · feedparser（Python 库）🟢 免费
+    - 适合：有 RSS/Atom feed 的来源（EPA、CalRecycle 均有官方 RSS）
+    - 接入：pip install feedparser，5 行代码解析
+
+  · pypdf2 / pdfplumber（Python 库）🟢 免费
+    - 适合：PDF 格式的法规原文解析
+
+需要定制的部分
+  · 法规变更 Diff 检测（对比 last_seen_id，识别"UPDATED"状态）
+  · 多来源结果合并去重（同一法规可能在多个来源出现）
+  · 错误重试逻辑（政府网站偶发 503）
+
+状态：🟡 轻度定制 — 1 周（Firecrawl + feedparser + 自定义 Diff 逻辑）
+
+  推荐组合：
+    RSS 来源（EPA/CalRecycle）→ feedparser（免费）
+    HTML 来源（CDPH/TCEQ）   → Firecrawl API（$16/月）
+    PDF 附件                  → pdfplumber（免费）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+③ LegalInterpreter Agent — 法规解读
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+职责：将法律原文解读为餐馆经营者可理解的结构化摘要
+
+──── 输入接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "reg_id": "EPA-40CFR453-2026-06-05",
+    "title": "Final Rule - ...",
+    "raw_text": "...法规全文，可能 5000–30000 字...",
+    "pdf_url": "https://...",           // 可选，优先使用 raw_text
+    "target_audience": "restaurant_owner",
+    "language": "en" | "zh" | "both",
+    "context": {                        // 来自 Memory，提供背景
+      "related_regs": ["40CFR403"],     // 相关历史法规
+      "prior_interpretations": [...]    // 专家过去对同类法规的解读样本
+    }
+  }
+
+──── 输出接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "reg_id": "EPA-40CFR453-2026-06-05",
+    "interpretation": {
+      "summary_3sentences": "EPA 要求所有有室外排水的餐饮设施...",
+      "effective_date": "2026-09-05",
+      "enforcement_agency": "地方水务局 (Local Water Authority)",
+      "penalty": {
+        "min": 1000,
+        "max": 10000,
+        "unit": "USD/day",
+        "consequence": "每违规天 $1,000–$10,000，可能吊销营业执照"
+      },
+      "affected_restaurant_types": [
+        "has_outdoor_seating",
+        "has_outdoor_washing_area",
+        "has_parking_lot_drainage"
+      ],
+      "compliance_actions": [
+        "安装二级油脂截留器",
+        "保留安装证明备查"
+      ],
+      "estimated_compliance_cost": "$800–$3,000（一次性）",
+      "confidence": 0.92              // 解读置信度
+    },
+    "model_used": "claude-fine-tuned-v2" | "claude-sonnet-4-6",
+    "tokens_used": 4821
+  }
+
+──── 第三方方案评估 ────────────────────────────────────────────────────────────
+
+MVP 阶段（可直接使用）
+  · Claude API（claude-sonnet-4-6）🟡
+    - 接入：Anthropic SDK，精心设计 System Prompt
+    - System Prompt 要点：角色设定（15年合规顾问）+ 输出 JSON Schema + 示例
+    - 优点：零开发，当天可用，质量够用
+    - 缺点：没有专家个人风格，解读可能过于保守
+    - 成本：每次约 $0.01–$0.05（视法规长度）
+
+  · GPT-4o（OpenAI）🟡
+    - 类似，JSON mode 输出更稳定
+
+生产阶段（需要开发）🔴
+  · 专家微调模型（通过 OPC FTaaS 或 Together AI）
+    - 训练数据：专家过去 5 年的 300 份法规解读文档
+    - 微调方式：LoRA（低成本），基底模型建议 Llama-3-8B 或 Qwen-7B
+    - 训练平台选项：
+      ① OPC FTaaS（本平台）          — 成本最低，与平台深度集成
+      ② Together AI Fine-tuning       — $0.1/K tokens，API 简单
+      ③ Replicate Fine-tuning         — 支持私有模型托管
+    - 开发工作：数据清洗 + 格式化（约 2 周）+ 训练（约 1 周）
+    - 效果：解读风格与专家一致，减少 Critic 打回率
+
+状态：MVP=🟡（Claude API 直接用）/ 生产=🔴（微调，3 周）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+④ RiskMapper Agent — 风险映射
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+职责：将解读后的法规映射到具体受影响的餐馆列表
+
+──── 输入接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "reg_id": "EPA-40CFR453-2026-06-05",
+    "affected_restaurant_types": [
+      "has_outdoor_seating",
+      "has_outdoor_washing_area"
+    ],
+    "affected_states": ["CA", "TX"],   // null = 全国
+    "effective_date": "2026-09-05",
+    "penalty_max_per_day": 10000,
+    "expert_id": "expert_uuid"         // 只查该专家的订阅客户
+  }
+
+──── 内部 SQL 查询（PostgreSQL）─────────────────────────────────────────────
+
+  -- 示例查询
+  SELECT
+    r.restaurant_id,
+    r.name,
+    r.email,
+    r.phone,
+    r.city,
+    r.state,
+    r.outdoor_seating,
+    r.outdoor_seating_sqft,
+    r.has_outdoor_washing,
+    r.subscription_status,
+    CASE
+      WHEN r.outdoor_seating = true AND r.outdoor_seating_sqft > 0 THEN 'HIGH'
+      WHEN r.has_outdoor_washing = true THEN 'HIGH'
+      ELSE 'MEDIUM'
+    END AS risk_level
+  FROM restaurants r
+  WHERE r.expert_id = $1
+    AND r.subscription_status = 'active'
+    AND r.state = ANY($2)
+    AND (r.outdoor_seating = true OR r.has_outdoor_washing = true)
+  ORDER BY risk_level DESC, r.name;
+
+──── 餐馆档案 Schema（PostgreSQL 表）────────────────────────────────────────
+
+  restaurants (
+    restaurant_id     UUID PRIMARY KEY,
+    expert_id         UUID REFERENCES experts(id),
+    name              VARCHAR(200),
+    email             VARCHAR(200),
+    phone             VARCHAR(20),
+    address           TEXT,
+    city              VARCHAR(100),
+    state             CHAR(2),         -- CA, TX, NY...
+    zip               VARCHAR(10),
+    county            VARCHAR(100),    -- 用于县级法规匹配
+
+    -- 经营属性（法规匹配核心字段）
+    business_type     VARCHAR(50),     -- full_service / fast_food / food_truck / catering
+    seating_capacity  INT,
+    outdoor_seating   BOOLEAN,
+    outdoor_seating_sqft INT,
+    has_outdoor_washing  BOOLEAN,
+    has_parking_lot   BOOLEAN,
+    has_grease_trap   BOOLEAN,         -- 已安装油脂截留器
+    serves_alcohol    BOOLEAN,
+    has_drive_through BOOLEAN,
+
+    -- 合规状态
+    compliance_status JSONB,           -- {"EPA-40CFR453": "compliant", ...}
+    last_inspection   DATE,
+    known_violations  TEXT[],
+
+    -- 订阅信息
+    subscription_status VARCHAR(20),   -- active / paused / cancelled
+    subscribed_at     TIMESTAMP,
+    language_pref     VARCHAR(5),      -- en / zh / es
+
+    created_at        TIMESTAMP,
+    updated_at        TIMESTAMP
+  )
+
+──── 输出接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "reg_id": "EPA-40CFR453-2026-06-05",
+    "mapping_id": "map_uuid",
+    "affected_count": 49,
+    "affected_restaurants": [
+      {
+        "restaurant_id": "r001",
+        "name": "Golden Dragon Restaurant",
+        "email": "owner@goldendragon.com",
+        "phone": "+15101234567",
+        "city": "Oakland",
+        "state": "CA",
+        "county": "Alameda",
+        "risk_level": "HIGH",           // HIGH / MEDIUM / LOW
+        "risk_reasons": ["outdoor_seating=true", "outdoor_seating_sqft=450"],
+        "already_compliant": false,     // 若已知合规，AlertComposer 降级处理
+        "language_pref": "en"
+      },
+      ...
+    ],
+    "skipped_count": 151,             // 不受影响的餐馆数
+    "skip_reasons": {"no_outdoor_facilities": 151}
+  }
+
+──── 第三方方案评估 ────────────────────────────────────────────────────────────
+
+部分可用的第三方工具
+  · LangChain SQL Agent 🟡
+    - 可以用自然语言生成 SQL（"找到有室外座位的加州餐馆"）
+    - 适合 MVP 阶段：快速搭建，但生成 SQL 不稳定
+    - 生产阶段不推荐：SQL 注入风险，性能差
+
+  · Directus / Hasura（GraphQL API over PostgreSQL）🟡
+    - 自动生成 CRUD API，RiskMapper 只需调 GraphQL
+    - 节省约 1 周后端开发时间
+
+必须自己开发的部分 🔴
+  · 餐馆属性 Schema 设计（业务核心，无法外包）
+  · 法规类型 → 匹配条件的规则引擎
+    例：
+    "has_outdoor_seating" 法规 → 查 outdoor_seating=true 的餐馆
+    "grease_trap_required" 法规 → 查 has_grease_trap=false 的餐馆
+    "county_specific" 法规 → 按 county 字段过滤
+  · 已合规状态追踪（避免重复预警合规餐馆）
+  · 风险等级计算逻辑
+
+状态：🔴 需要开发 — 规则引擎 + Schema 设计约 2 周
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⑤ AlertComposer Agent — 预警撰写
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+职责：为每家受影响餐馆生成个性化预警邮件（支持批量）
+
+──── 输入接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "composer_job_id": "job_uuid",
+    "regulations": [                   // 本周所有触发预警的法规
+      {
+        "reg_id": "EPA-40CFR453-2026-06-05",
+        "interpretation": {...},       // LegalInterpreter 输出
+        "effective_date": "2026-09-05",
+        "risk_level_default": "HIGH"
+      },
+      {
+        "reg_id": "CalRecycle-SB1383-2026-06",
+        "interpretation": {...},
+        "effective_date": "2026-07-01",
+        "risk_level_default": "MEDIUM"
+      }
+    ],
+    "restaurants": [                   // RiskMapper 输出的受影响列表
+      {
+        "restaurant_id": "r001",
+        "name": "Golden Dragon Restaurant",
+        "city": "Oakland",
+        "state": "CA",
+        "county": "Alameda",
+        "risk_level": "HIGH",
+        "applicable_regs": ["EPA-40CFR453-2026-06-05", "CalRecycle-SB1383-2026-06"],
+        "language_pref": "en",
+        "style_memory": {              // 从 ChromaDB 取该餐馆的历史交互
+          "tone_preference": "direct", // 语气偏好（从历史回复学习）
+          "past_alerts_count": 3,
+          "owner_name": "David Chen"   // 若已知
+        }
+      }
+    ],
+    "expert_signature": "John Smith, EPA Compliance Specialist"
+  }
+
+──── 输出接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "job_id": "job_uuid",
+    "composed_at": "2026-06-08T06:54:00Z",
+    "emails": [
+      {
+        "restaurant_id": "r001",
+        "to_email": "owner@goldendragon.com",
+        "to_phone": "+15101234567",
+        "subject": "[HIGH ALERT] 2 项合规要求 — 91 天内必须处理 — Golden Dragon",
+        "body_html": "<html>...</html>",
+        "body_text": "Dear Golden Dragon...",  // 纯文本备用
+        "sms_text": "【RegWatch】Golden Dragon: 2项合规要求，91天内需处理。详情见邮件。",
+        "risk_level": "HIGH",
+        "applicable_regs": ["EPA-40CFR453-2026-06-05", "CalRecycle-SB1383-2026-06"],
+        "send_channel": "email_and_sms"   // HIGH → 双渠道
+      },
+      ...
+    ],
+    "total_count": 200,
+    "high_risk_count": 49,
+    "medium_risk_count": 101,
+    "no_change_count": 50,            // 德州周报
+    "avg_quality_score": null         // Critic 填写
+  }
+
+──── Prompt 模板核心结构 ────────────────────────────────────────────────────
+
+  System: 你是一位拥有 15 年经验的环保合规顾问，正在为 [餐馆名] 的老板撰写
+          合规预警邮件。语气：专业但友好，直接指出风险和行动步骤。
+          输出格式：JSON，包含 subject / body_html / body_text / sms_text。
+
+  Human:  餐馆信息：[name, city, county, risk_reasons]
+          适用法规：[regulation_1, regulation_2]
+          每条法规信息：[摘要, 截止日期, 罚款金额, 整改步骤]
+          历史偏好：[tone, past_count, owner_name]
+          要求：每封邮件必须包含 ① 违规后果金额 ② 截止日期 ③ 3 步整改建议
+
+──── 第三方方案评估 ────────────────────────────────────────────────────────────
+
+可直接使用
+  · Claude API（推荐，JSON mode）🟡
+  · GPT-4o（JSON mode，批量 API 支持并发）🟡
+
+商业邮件模板工具（可替代手写 HTML）
+  · MJML（mjml.io）🟢 — 响应式邮件模板框架，免费，npm 包
+    - 专家在 OPC 控制台选模板 → AlertComposer 填数据
+
+需要定制的部分
+  · RegWatch 专属 Prompt 模板（合规预警场景，约 3 天）
+  · 风险等级 → 邮件结构映射（HIGH 双预警模板 vs MEDIUM 单预警）
+  · 批量生成优化（200 封并发调用，rate limit 处理）
+
+状态：🟡 轻度定制 — 1 周（Prompt 工程 + MJML 模板 + 批量逻辑）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⑥ Critic Agent — 质量评审
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+职责：对 AlertComposer 输出的预警进行质量评分，不合格打回重写
+
+──── 输入接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "critic_job_id": "critic_uuid",
+    "emails": [...],                   // AlertComposer 的全部输出
+    "evaluation_rubric": {            // 评分标准（专家在 OPC 控制台配置）
+      "required_fields": [
+        "violation_amount",           // 必须包含违规金额
+        "deadline_date",              // 必须包含截止日期
+        "action_steps_count_min": 3,  // 至少 3 步整改建议
+        "personalization_check": true // 必须包含餐馆名
+      ],
+      "style_checks": [
+        "no_legal_jargon",            // 不能出现法律术语（如 "promulgated"）
+        "plain_english_grade_8"       // 可读性 ≤ 8 年级水平
+      ],
+      "pass_threshold": 8.0
+    },
+    "sample_size": 10                 // 随机抽样 10 封精细评审，其余规则检查
+  }
+
+──── 评分算法 ────────────────────────────────────────────────────────────────
+
+  规则检查（所有邮件，自动）
+    · 包含金额关键词（$X,XXX）：+2 分
+    · 包含日期（YYYY-MM-DD 格式）：+2 分
+    · 包含 3 个以上 "Step N" 标记：+2 分
+    · 包含餐馆名称：+1 分
+
+  LLM 评审（抽样 10 封，Claude-as-Judge）
+    · Prompt："请从餐馆老板视角评估这封预警邮件是否清晰、可执行、有说服力。
+               评分 0-10，给出理由和具体改进建议。"
+    · 输出：{ "score": 8.5, "issues": ["第2条整改建议不够具体"], "suggestions": [...] }
+
+──── 输出接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "critic_result": "APPROVED" | "REVISION_REQUIRED",
+    "overall_score": 9.1,
+    "pass_count": 197,
+    "fail_count": 3,
+    "failed_emails": [
+      {
+        "restaurant_id": "r045",
+        "score": 5.5,
+        "issues": ["缺少截止日期", "整改建议少于 3 步"],
+        "revision_prompt": "请重写，补充：① EPA 9月5日截止日期 ② 第3步证明保存建议"
+      }
+    ],
+    "revision_round": 1,              // 当前第几轮（最多 3 轮）
+    "send_approved": [...],           // 直接转 Dispatcher 的邮件
+    "send_to_revision": [...]         // 退回 AlertComposer 的邮件
+  }
+
+──── 第三方方案评估 ────────────────────────────────────────────────────────────
+
+可直接使用
+  · Claude-as-Judge 模式（Anthropic 官方推荐）🟡
+    - 直接调 Claude API，System Prompt 设置评判角色
+    - 成熟的 LLM 评估模式，文档完善
+
+  · DeepEval（deepeval.com）🟡
+    - 开源 LLM 评估框架，支持自定义指标
+    - pip install deepeval
+    - 可直接定义 "ViolationAmountPresent" 等指标
+
+需要定制
+  · RegWatch 专属评分 Rubric（合规邮件必须包含的字段）
+  · 规则检查逻辑（正则匹配金额/日期/步骤数）
+
+状态：🟡 轻度定制 — 3–5 天（Rubric 定义 + 规则引擎）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⑦ Dispatcher Agent — 多渠道发送
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+职责：按风险等级路由，通过 Email 和 SMS 将预警发送给餐馆
+
+──── 输入接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "dispatch_job_id": "dispatch_uuid",
+    "send_approved": [...],           // Critic 审批通过的邮件列表
+    "routing_rules": {
+      "HIGH":   ["email", "sms"],     // 双渠道
+      "MEDIUM": ["email"],
+      "LOW":    ["email"],            // 合并进周报
+      "NO_CHANGE": ["email"]          // 周报
+    },
+    "schedule": "immediate" | "2026-06-08T08:00:00Z"  // 专家设定发送时间
+  }
+
+──── 输出接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "dispatch_id": "dispatch_uuid",
+    "dispatched_at": "2026-06-08T07:38:00Z",
+    "results": [
+      {
+        "restaurant_id": "r001",
+        "email_status": "delivered",  // delivered / bounced / deferred
+        "email_message_id": "resend_msg_id",
+        "sms_status": "delivered",
+        "sms_sid": "twilio_sid",
+        "sent_at": "2026-06-08T07:22:14Z"
+      },
+      ...
+    ],
+    "summary": {
+      "total": 200,
+      "email_delivered": 198,
+      "email_bounced": 2,
+      "sms_delivered": 49,
+      "sms_failed": 0
+    }
+  }
+
+──── 第三方 API 接口 ────────────────────────────────────────────────────────────
+
+Email — Resend（resend.com）🟢 直接使用
+  POST https://api.resend.com/emails
+  Headers: Authorization: Bearer {RESEND_API_KEY}
+  Body: {
+    "from": "RegWatch <alerts@regwatch.com>",
+    "to": ["owner@goldendragon.com"],
+    "subject": "[HIGH ALERT] ...",
+    "html": "<html>...</html>",
+    "text": "Dear..."
+  }
+  · 价格：$20/月，100K 封（远超 RegWatch 需求）
+  · 退信处理：Webhook 自动接收，更新 restaurants 表
+
+SMS — Twilio（twilio.com）🟢 直接使用
+  POST https://api.twilio.com/2010-04-01/Accounts/{SID}/Messages
+  Body: {
+    "From": "+18005551234",
+    "To": "+15101234567",
+    "Body": "【RegWatch】Golden Dragon: 2项合规要求..."
+  }
+  · 价格：$0.0075/条（49 条 = $0.37）
+  · 回复处理：Twilio Webhook → QA Agent
+
+需要定制的部分
+  · 路由规则执行逻辑（risk_level → channel 选择）
+  · 退信处理（email bounced → 标记餐馆邮箱无效，SMS 补发）
+  · 发送记录写 PostgreSQL + 触发 Memory Agent 更新
+
+状态：🟢 接近零开发 — Dispatcher 核心 2–3 天即可上线
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⑧ Memory Agent — 知识库与记忆更新
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+职责：维护三类持久化记忆：法规库、餐馆合规状态、风格偏好
+
+──── 三类记忆存储 ────────────────────────────────────────────────────────────
+
+类型 A：法规向量库（ChromaDB Collection: regulations）
+  存储：每条法规的 embedding（用于语义搜索相似法规）
+  Schema:
+  {
+    "id": "EPA-40CFR453-2026-06-05",
+    "embedding": [...],               // 法规全文的 embedding
+    "metadata": {
+      "title": "...",
+      "effective_date": "2026-09-05",
+      "source": "EPA",
+      "affected_types": ["has_outdoor_seating"],
+      "penalty_max": 10000,
+      "sent_count": 49,               // 已推送给多少餐馆
+      "discovered_at": "2026-06-08"
+    }
+  }
+
+类型 B：餐馆合规时间线（PostgreSQL: restaurant_compliance_log）
+  restaurant_compliance_log (
+    log_id          UUID,
+    restaurant_id   UUID,
+    reg_id          VARCHAR,
+    action          VARCHAR,    -- "alerted" / "complied" / "pending" / "waived"
+    action_date     DATE,
+    channel         VARCHAR,    -- "email" / "sms"
+    opened          BOOLEAN,    -- 邮件是否已读
+    replied         BOOLEAN,
+    notes           TEXT
+  )
+
+类型 C：风格偏好（ChromaDB Collection: restaurant_styles）
+  存储：该餐馆历史邮件的语气、回复倾向，供 AlertComposer 个性化
+
+──── 输入接口（写入触发）─────────────────────────────────────────────────────
+
+  每周运行结束后由编排层调用
+  {
+    "update_type": "weekly_cycle",
+    "new_regulations": [...],         // 本周新发现的法规
+    "sent_log": [...],                // Dispatcher 的发送记录
+    "critic_feedback": [...]          // Critic 的评分记录（用于自我改进）
+  }
+
+  实时触发（餐馆回复邮件时）
+  {
+    "update_type": "restaurant_reply",
+    "restaurant_id": "r001",
+    "reg_id": "EPA-40CFR453-2026-06-05",
+    "reply_content": "我们已经安装了油脂截留器，请更新状态",
+    "reply_intent": "compliance_confirmed"  // QA Agent 分类
+  }
+
+──── 输出接口（读取） ───────────────────────────────────────────────────────
+
+  Planner 读取：GET /memory/weekly_context?expert_id=xxx
+  返回：上周法规 ID 列表、各来源最后扫描时间、本月已推送摘要
+
+  AlertComposer 读取：GET /memory/restaurant_style?restaurant_id=r001
+  返回：语气偏好、历史预警摘要、老板名字
+
+──── 第三方方案评估 ────────────────────────────────────────────────────────────
+
+可直接使用
+  · Mem0（mem0.ai）🟡 托管服务
+    - 功能：专为 AI Agent 设计的持久化记忆服务
+    - 接入：pip install mem0ai，5 行代码添加/搜索记忆
+    - 优势：自动处理 embedding、去重、遗忘曲线
+    - 价格：免费层 10万 token/月，够 MVP
+
+  · Zep（getzep.com）🟡
+    - 类似 Mem0，开源可自部署
+    - 适合对数据主权有要求的场景
+
+  · ChromaDB（直接使用）🟢
+    - 本地向量库，免费，pip install chromadb
+    - 适合法规 embedding 存储（A 类记忆）
+
+需要定制
+  · 三类记忆的 Schema 设计（法规/合规状态/风格）
+  · 法规版本追踪（同一法规的新旧版本 diff 存储）
+  · 定期清理（超过 2 年的旧法规归档）
+
+状态：🟡 轻度定制 — 1 周（Schema + Mem0 集成）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⑨ QA Agent — 24/7 餐馆问答
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+职责：回答订阅餐馆主的跟进问题，超出能力范围时转人工
+
+──── 输入接口（两种触发）────────────────────────────────────────────────────
+
+触发方式 A：餐馆回复预警邮件
+  Resend Inbound Webhook → POST /qa/inbound_email
+  {
+    "from": "owner@goldendragon.com",
+    "subject": "Re: [HIGH ALERT] 2 项合规要求...",
+    "body_text": "我想知道油脂截留器具体买哪个型号，在哪里买？",
+    "restaurant_id": "r001",          // 通过邮件地址反查
+    "in_reply_to_reg": "EPA-40CFR453-2026-06-05"
+  }
+
+触发方式 B：客户门户在线聊天
+  WebSocket / REST API
+  POST /qa/chat
+  {
+    "restaurant_id": "r001",
+    "session_id": "chat_session_uuid",
+    "message": "我们的排水在餐馆里面，室外只有下雨时积水，算受影响吗？",
+    "context_reg_ids": ["EPA-40CFR453-2026-06-05"]
+  }
+
+──── 检索增强（RAG）─────────────────────────────────────────────────────────
+
+  1. 从 ChromaDB 检索相关法规段落
+     query_embedding = embed("油脂截留器型号要求")
+     results = chroma.query(query_embedding, n_results=5)
+
+  2. 从 PostgreSQL 加载该餐馆档案 + 历史预警
+     SELECT * FROM restaurants WHERE restaurant_id = 'r001';
+     SELECT * FROM restaurant_compliance_log WHERE restaurant_id = 'r001';
+
+  3. 构建 Prompt 上下文
+     System: 你是合规顾问助手，基于以下法规原文和餐馆信息回答问题...
+     Context: [法规段落] + [餐馆档案] + [历史预警]
+     Question: [用户问题]
+
+──── 输出接口 ────────────────────────────────────────────────────────────────
+
+  {
+    "qa_id": "qa_uuid",
+    "restaurant_id": "r001",
+    "question": "油脂截留器型号？",
+    "answer": "根据 EPA 40 CFR Part 453...",
+    "confidence": 0.88,
+    "escalate_to_expert": false,
+    "escalate_reason": null,
+    "disclaimer": "本回答仅供参考，不构成法律建议...",
+    "reply_channel": "email" | "chat",
+    "reply_sent": true,
+    "memory_update": {                 // 触发 Memory Agent 记录此次问答
+      "restaurant_id": "r001",
+      "question_type": "product_recommendation",
+      "reg_id": "EPA-40CFR453-2026-06-05"
+    }
+  }
+
+──── 升级路由逻辑 ────────────────────────────────────────────────────────────
+
+  if confidence < 0.7 or question_type in ["legal_liability", "penalty_dispute", "government_negotiation"]:
+      escalate_to_expert = True
+      send expert notification email with question + restaurant context
+      send restaurant: "您的问题较复杂，专家将在 24 小时内回复您"
+
+──── 第三方方案评估 ────────────────────────────────────────────────────────────
+
+可直接使用
+  · OpenAI Assistants API 🟡
+    - 支持上传法规 PDF 文件，自动建立向量索引
+    - 内置对话历史管理（Thread）
+    - 接入：from openai import OpenAI；创建 Assistant + Thread + Run
+    - 适合：MVP 快速搭建
+
+  · Intercom（Fin AI）🟡
+    - 商业客服 AI 平台，可上传知识库，自动回复
+    - 优势：客户门户 + 邮件回复 + 升级路由全包
+    - 价格：$39/月起
+    - 适合：不想开发客服界面的场景
+
+  · Claude API + LlamaIndex（推荐生产方案）🟡
+    - LlamaIndex 处理 RAG（文档分块 + 检索）
+    - Claude API 处理生成
+    - 完全可控，可与 OPC 平台深度集成
+
+需要定制
+  · 餐馆档案 + 历史预警的上下文注入
+  · 升级路由判断逻辑（置信度阈值 + 问题类型分类）
+  · Twilio SMS 回复处理（餐馆通过 SMS 回复时触发 QA Agent）
+  · 邮件回复解析（从邮件正文提取问题）
+
+状态：🟡 轻度定制 — 1.5 周（RAG 搭建 + 升级路由 + 多渠道接入）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+编排层 — LangGraph 状态机
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+所有 Agent 的调度由编排层统一管理
+
+状态机节点（LangGraph StateGraph）
+  START
+    → planner_node          （生成扫描任务）
+    → reg_scanner_node      （抓取法规，并行 4 个来源）
+    → legal_interpreter_node（解读法规）
+    → risk_mapper_node      （匹配餐馆）
+    → alert_composer_node   （生成预警）
+    → critic_node           （质量评审）
+    → [条件分支]
+        if critic.result == "APPROVED" → expert_review_node
+        if critic.result == "REVISION" and rounds < 3 → alert_composer_node（重试）
+        if critic.result == "REVISION" and rounds >= 3 → expert_review_node（带标注）
+    → expert_review_node    （等待专家批准，最长 24h）
+    → dispatcher_node       （发送预警）
+    → memory_update_node    （更新记忆）
+    → END
+
+  QA Agent 作为独立服务常驻运行，不进入主状态机
+
+状态结构（LangGraph State）
+  {
+    "session_id": str,
+    "week": str,
+    "config": ExpertConfig,
+    "scan_tasks": list[ScanTask],
+    "findings": list[Regulation],
+    "interpretations": list[Interpretation],
+    "affected_restaurants": list[AffectedRestaurant],
+    "composed_emails": list[Email],
+    "critic_result": CriticResult,
+    "revision_round": int,
+    "expert_approved": bool,
+    "dispatch_result": DispatchResult,
+    "errors": list[str]
+  }
+
+第三方方案
+  · LangGraph（langchain-ai/langgraph）🟡 — 推荐
+  · n8n（n8n.io）🟡 — 可视化工作流，适合非开发者配置（但复杂逻辑受限）
+  · Prefect / Airflow 🟡 — 纯数据管道场景，不适合 LLM Agent 循环
+
+状态：🟡 轻度定制 — 1–2 周（状态机定义 + 节点连接 + 错误处理）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+第三方工具汇总与月度成本
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  工具            用途                    定价               月成本估算（200家）
+  ────────────────────────────────────────────────────────────────────────────
+  Claude API      LegalInterp/Composer    按 token 计费      ~$8/月
+  Firecrawl       HTML 网站抓取           $16/月起           $16
+  feedparser      RSS 解析                免费               $0
+  pdfplumber      PDF 解析                免费               $0
+  Resend          邮件发送                $20/月（100K封）   $20
+  Twilio          SMS 发送                $0.0075/条         ~$2（49条/周）
+  ChromaDB        向量存储                免费（自部署）     $0（VPS 内）
+  Mem0            Agent 记忆服务          免费层             $0（MVP）
+  LangGraph       Agent 编排              开源免费           $0
+  MJML            邮件模板渲染            开源免费           $0
+  PostgreSQL      关系数据库              自部署             $0（VPS 内）
+  Railway/Render  云部署（VPS）           $25/月起           $25
+  ────────────────────────────────────────────────────────────────────────────
+  合计月度基础设施成本                                        约 $71/月
+  （200 家规模，含所有第三方服务）
+
+  对比：200 家餐馆月总收入 $1,000
+  → 基础设施占比仅 7.1%
+  → 专家实际毛利率 ≈ 73%（扣除基础设施后）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+开发工作量汇总与优先级
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  优先级  组件                    工作量    关键依赖
+  ────────────────────────────────────────────────────────────────────────────
+  P0      餐馆档案 Schema 设计    3 天      — 所有 Agent 的基础数据结构
+  P0      PostgreSQL 初始化       1 天      — RiskMapper/Dispatcher 依赖
+  P0      Dispatcher（核心）      2 天      — Resend + Twilio 直接调用
+  ────────────────────────────────────────────────────────────────────────────
+  P1      RegScanner              5 天      Firecrawl + feedparser + Diff
+  P1      LegalInterpreter(MVP)   3 天      Claude API + Prompt 调试
+  P1      AlertComposer           5 天      Prompt 模板 + MJML + 批量
+  P1      Critic                  3 天      Rubric + Claude-as-Judge
+  ────────────────────────────────────────────────────────────────────────────
+  P2      Planner                 4 天      LangGraph + 记忆接口
+  P2      Memory Agent            5 天      ChromaDB + Mem0 + Schema
+  P2      QA Agent                7 天      RAG + 升级路由 + 多渠道
+  P2      编排层（LangGraph）     7 天      状态机 + 错误处理
+  ────────────────────────────────────────────────────────────────────────────
+  P3      LegalInterpreter(生产)  3 周      专家语料整理 + LoRA 微调
+  P3      RiskMapper 规则引擎     2 周      匹配规则完善 + 边界测试
+  ────────────────────────────────────────────────────────────────────────────
+
+  MVP 上线（P0 + P1，不含微调）：约 4–5 周
+  完整版上线（含 P2 编排层）：约 7–8 周
+  生产级（含 P3 微调）：约 11–12 周
+
+
+================================================================================
+文件路径：D:\claudecode\OPC_RegWatch_Agent_Specs.txt
+可视化页面：https://dongpu-zhang.github.io/cauchyx-ai/opc-regwatch.html
+================================================================================
