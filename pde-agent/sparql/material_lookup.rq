@@ -1,0 +1,27 @@
+# material_lookup.rq
+# Query all properties of a material by label (case-insensitive FILTER).
+# Usage: bind ?labelStr to the material name string.
+#
+# Example binding: initBindings={"labelStr": Literal("silicon")}
+
+PREFIX pde:  <http://cauchyx.ai/pde#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+
+SELECT ?mat ?name ?category ?k ?rho ?cp ?alpha ?mu ?sigma ?application
+WHERE {
+    ?mat rdfs:label ?name ;
+         a ?catClass ;
+         pde:thermalConductivity   ?k ;
+         pde:density                ?rho ;
+         pde:specificHeatCapacity   ?cp ;
+         pde:thermalDiffusivity     ?alpha .
+
+    ?catClass rdfs:subClassOf pde:Material .
+
+    OPTIONAL { ?mat pde:dynamicViscosity       ?mu }
+    OPTIONAL { ?mat pde:electricalConductivity ?sigma }
+    OPTIONAL { ?mat pde:applicationDomain      ?application }
+
+    FILTER (LCASE(STR(?name)) = LCASE(?labelStr))
+}

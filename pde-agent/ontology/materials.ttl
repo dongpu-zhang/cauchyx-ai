@@ -1,0 +1,214 @@
+@prefix pde:  <http://cauchyx.ai/pde#> .
+@prefix emmo: <https://w3id.org/emmo#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# ═══════════════════════════════════════════════════════════════
+#  CauchyX PDE Agent — Phase 2 Material Library
+#  EMMO-aligned: https://w3id.org/emmo (European Materials Modelling Ontology)
+#  All properties in SI units at standard conditions (25 °C, 1 atm) unless noted.
+#
+#  Derivation rule (SPARQL CONSTRUCT in derive_diffusivity.rq):
+#    pde:thermalDiffusivity = pde:thermalConductivity / (pde:density × pde:specificHeatCapacity)
+# ═══════════════════════════════════════════════════════════════
+
+# ── Material class hierarchy (EMMO-aligned) ──────────────────────
+
+pde:Material a owl:Class ;
+    rdfs:label "Material" ;
+    rdfs:comment "Physical material with thermophysical properties for PDE coefficients. EMMO-aligned." .
+
+pde:Metal         a owl:Class ; rdfs:subClassOf pde:Material ; rdfs:label "Metal" .
+pde:Semiconductor a owl:Class ; rdfs:subClassOf pde:Material ; rdfs:label "Semiconductor" .
+pde:Fluid         a owl:Class ; rdfs:subClassOf pde:Material ; rdfs:label "Fluid" .
+pde:Ceramic       a owl:Class ; rdfs:subClassOf pde:Material ; rdfs:label "Ceramic" .
+pde:Composite     a owl:Class ; rdfs:subClassOf pde:Material ; rdfs:label "Composite" .
+pde:BatteryMaterial a owl:Class ; rdfs:subClassOf pde:Material ; rdfs:label "BatteryMaterial" .
+
+[ a owl:AllDisjointClasses ;
+  owl:members ( pde:Metal pde:Semiconductor pde:Fluid pde:Ceramic pde:Composite pde:BatteryMaterial ) ] .
+
+# ── Data properties ──────────────────────────────────────────────
+
+pde:thermalConductivity    a owl:DatatypeProperty ;   # k  [W/(m·K)]
+    rdfs:domain pde:Material ; rdfs:range xsd:double .
+
+pde:density                a owl:DatatypeProperty ;   # ρ  [kg/m³]
+    rdfs:domain pde:Material ; rdfs:range xsd:double .
+
+pde:specificHeatCapacity   a owl:DatatypeProperty ;   # cp [J/(kg·K)]
+    rdfs:domain pde:Material ; rdfs:range xsd:double .
+
+pde:thermalDiffusivity     a owl:DatatypeProperty ;   # α  [m²/s]  = k/(ρ·cp)
+    rdfs:domain pde:Material ; rdfs:range xsd:double .
+
+pde:dynamicViscosity       a owl:DatatypeProperty ;   # μ  [Pa·s]  (fluids only)
+    rdfs:domain pde:Fluid ; rdfs:range xsd:double .
+
+pde:electricalConductivity a owl:DatatypeProperty ;   # σ  [S/m]
+    rdfs:domain pde:Material ; rdfs:range xsd:double .
+
+pde:yieldStrength          a owl:DatatypeProperty ;   # σ_y [Pa]
+    rdfs:domain pde:Metal ; rdfs:range xsd:double .
+
+pde:applicationDomain      a owl:DatatypeProperty ;
+    rdfs:domain pde:Material ; rdfs:range xsd:string .
+
+pde:casNumber              a owl:DatatypeProperty ;
+    rdfs:domain pde:Material ; rdfs:range xsd:string .
+
+# ═══════════════════════════════════════════════════════════════
+#  ABox — Material instances
+#  α values verified: α = k / (ρ × cp)
+# ═══════════════════════════════════════════════════════════════
+
+# ── Metals ───────────────────────────────────────────────────────
+
+pde:Copper a pde:Metal ;
+    rdfs:label "copper" ;
+    pde:thermalConductivity    "385.0"^^xsd:double ;   # W/(m·K)
+    pde:density                "8960.0"^^xsd:double ;  # kg/m³
+    pde:specificHeatCapacity   "385.0"^^xsd:double ;   # J/(kg·K)
+    pde:thermalDiffusivity     "1.116e-4"^^xsd:double; # m²/s
+    pde:electricalConductivity "5.96e7"^^xsd:double ;  # S/m
+    pde:applicationDomain      "Electronics, heat exchangers, PCB" .
+
+pde:Aluminum6061 a pde:Metal ;
+    rdfs:label "aluminum" ;
+    pde:thermalConductivity    "167.0"^^xsd:double ;
+    pde:density                "2700.0"^^xsd:double ;
+    pde:specificHeatCapacity   "896.0"^^xsd:double ;
+    pde:thermalDiffusivity     "6.903e-5"^^xsd:double ;
+    pde:electricalConductivity "2.52e7"^^xsd:double ;
+    pde:yieldStrength          "2.76e8"^^xsd:double ;  # Pa (T6 temper)
+    pde:applicationDomain      "Aerospace structures, heat sinks" .
+
+pde:Steel316L a pde:Metal ;
+    rdfs:label "steel-316l" ;
+    pde:thermalConductivity    "16.3"^^xsd:double ;
+    pde:density                "7990.0"^^xsd:double ;
+    pde:specificHeatCapacity   "500.0"^^xsd:double ;
+    pde:thermalDiffusivity     "4.080e-6"^^xsd:double ;
+    pde:electricalConductivity "1.37e6"^^xsd:double ;
+    pde:yieldStrength          "2.07e8"^^xsd:double ;
+    pde:applicationDomain      "Medical devices, chemical processing, FDA 21 CFR" .
+
+pde:TiTanium6Al4V a pde:Metal ;
+    rdfs:label "ti-6al-4v" ;
+    pde:thermalConductivity    "6.7"^^xsd:double ;
+    pde:density                "4430.0"^^xsd:double ;
+    pde:specificHeatCapacity   "526.0"^^xsd:double ;
+    pde:thermalDiffusivity     "2.876e-6"^^xsd:double ;
+    pde:electricalConductivity "5.8e5"^^xsd:double ;
+    pde:yieldStrength          "8.80e8"^^xsd:double ;
+    pde:applicationDomain      "Aerospace, biomedical implants, DO-178C" .
+
+# ── Semiconductors ───────────────────────────────────────────────
+
+pde:Silicon a pde:Semiconductor ;
+    rdfs:label "silicon" ;
+    pde:casNumber              "7440-21-3" ;
+    pde:thermalConductivity    "148.0"^^xsd:double ;
+    pde:density                "2330.0"^^xsd:double ;
+    pde:specificHeatCapacity   "712.0"^^xsd:double ;
+    pde:thermalDiffusivity     "8.918e-5"^^xsd:double ;
+    pde:electricalConductivity "1.56e-3"^^xsd:double ; # intrinsic
+    pde:applicationDomain      "Semiconductor chips, MEMS, photovoltaics" .
+
+pde:GalliumNitride a pde:Semiconductor ;
+    rdfs:label "gan" ;
+    pde:casNumber              "25617-97-4" ;
+    pde:thermalConductivity    "130.0"^^xsd:double ;
+    pde:density                "6150.0"^^xsd:double ;
+    pde:specificHeatCapacity   "490.0"^^xsd:double ;
+    pde:thermalDiffusivity     "4.314e-5"^^xsd:double ;
+    pde:electricalConductivity "1.0e-10"^^xsd:double ; # insulating (undoped)
+    pde:applicationDomain      "Power electronics, RF devices, EV inverters" .
+
+# ── Fluids ───────────────────────────────────────────────────────
+
+pde:Water a pde:Fluid ;
+    rdfs:label "water" ;
+    pde:casNumber              "7732-18-5" ;
+    pde:thermalConductivity    "0.607"^^xsd:double ;
+    pde:density                "997.0"^^xsd:double ;
+    pde:specificHeatCapacity   "4182.0"^^xsd:double ;
+    pde:thermalDiffusivity     "1.456e-7"^^xsd:double ;
+    pde:dynamicViscosity       "8.9e-4"^^xsd:double ;  # Pa·s at 25°C
+    pde:applicationDomain      "Cooling, hydraulics, biological systems" .
+
+pde:Air a pde:Fluid ;
+    rdfs:label "air" ;
+    pde:thermalConductivity    "0.0262"^^xsd:double ;
+    pde:density                "1.184"^^xsd:double ;   # at 25°C, 1 atm
+    pde:specificHeatCapacity   "1007.0"^^xsd:double ;
+    pde:thermalDiffusivity     "2.198e-5"^^xsd:double ;
+    pde:dynamicViscosity       "1.85e-5"^^xsd:double ;
+    pde:applicationDomain      "Convection, HVAC, aerodynamics" .
+
+pde:FC72 a pde:Fluid ;
+    rdfs:label "fc-72" ;
+    pde:thermalConductivity    "0.057"^^xsd:double ;
+    pde:density                "1680.0"^^xsd:double ;
+    pde:specificHeatCapacity   "1100.0"^^xsd:double ;
+    pde:thermalDiffusivity     "3.084e-8"^^xsd:double ;
+    pde:dynamicViscosity       "6.4e-4"^^xsd:double ;
+    pde:applicationDomain      "Liquid cooling of electronics, data centers" .
+
+# ── Battery materials ─────────────────────────────────────────────
+
+pde:LFP a pde:BatteryMaterial ;
+    rdfs:label "lfp" ;
+    pde:casNumber              "15365-14-7" ;
+    pde:thermalConductivity    "1.0"^^xsd:double ;
+    pde:density                "3600.0"^^xsd:double ;
+    pde:specificHeatCapacity   "1000.0"^^xsd:double ;
+    pde:thermalDiffusivity     "2.778e-7"^^xsd:double ;
+    pde:applicationDomain      "LiFePO4 cathode: EV battery packs (CATL, BYD)" .
+
+pde:NMC811 a pde:BatteryMaterial ;
+    rdfs:label "nmc811" ;
+    pde:thermalConductivity    "1.5"^^xsd:double ;
+    pde:density                "4800.0"^^xsd:double ;
+    pde:specificHeatCapacity   "900.0"^^xsd:double ;
+    pde:thermalDiffusivity     "3.472e-7"^^xsd:double ;
+    pde:applicationDomain      "NMC-811 cathode: high-energy EV batteries" .
+
+# ── Ceramics ─────────────────────────────────────────────────────
+
+pde:Alumina a pde:Ceramic ;
+    rdfs:label "alumina" ;
+    pde:casNumber              "1344-28-1" ;
+    pde:thermalConductivity    "30.0"^^xsd:double ;
+    pde:density                "3960.0"^^xsd:double ;
+    pde:specificHeatCapacity   "880.0"^^xsd:double ;
+    pde:thermalDiffusivity     "8.607e-6"^^xsd:double ;
+    pde:applicationDomain      "Substrates, insulators, refractories" .
+
+pde:SiliconCarbide a pde:Ceramic ;
+    rdfs:label "sic" ;
+    pde:casNumber              "409-21-2" ;
+    pde:thermalConductivity    "120.0"^^xsd:double ;
+    pde:density                "3210.0"^^xsd:double ;
+    pde:specificHeatCapacity   "750.0"^^xsd:double ;
+    pde:thermalDiffusivity     "4.984e-5"^^xsd:double ;
+    pde:applicationDomain      "Power semiconductors, brake discs, nuclear" .
+
+# ── Composites ────────────────────────────────────────────────────
+
+pde:CFRP a pde:Composite ;
+    rdfs:label "cfrp" ;
+    pde:thermalConductivity    "40.0"^^xsd:double ;   # in-plane
+    pde:density                "1600.0"^^xsd:double ;
+    pde:specificHeatCapacity   "800.0"^^xsd:double ;
+    pde:thermalDiffusivity     "3.125e-5"^^xsd:double ;
+    pde:applicationDomain      "Carbon fiber: aerospace, Formula 1, wind turbines" .
+
+pde:Concrete a pde:Composite ;
+    rdfs:label "concrete" ;
+    pde:thermalConductivity    "1.7"^^xsd:double ;
+    pde:density                "2300.0"^^xsd:double ;
+    pde:specificHeatCapacity   "880.0"^^xsd:double ;
+    pde:thermalDiffusivity     "8.399e-7"^^xsd:double ;
+    pde:applicationDomain      "Civil engineering, nuclear containment, bridges" .

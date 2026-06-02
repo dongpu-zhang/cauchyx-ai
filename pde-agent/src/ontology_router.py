@@ -37,8 +37,9 @@ try:
 except ImportError:
     SHACL_AVAILABLE = False
 
-from .unit_normalizer import normalize_params, NormalizationResult
-from .prov_generator  import ProvSession, AGENT_LLM, AGENT_REASONER, AGENT_XNET, AGENT_FDM, AGENT_FEM
+from .unit_normalizer   import normalize_params, NormalizationResult
+from .prov_generator    import ProvSession, AGENT_LLM, AGENT_REASONER, AGENT_XNET, AGENT_FDM, AGENT_FEM
+from .material_library  import get_material, MaterialProps
 
 PDE  = Namespace("http://cauchyx.ai/pde#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
@@ -46,6 +47,7 @@ PROV = Namespace("http://www.w3.org/ns/prov#")
 # 本体文件路径（相对于此文件）
 _HERE        = Path(__file__).parent.parent
 ONTOLOGY_TTL = _HERE / "ontology" / "pde_core.ttl"
+MATERIALS_TTL = _HERE / "ontology" / "materials.ttl"
 HALLUC_RQ    = _HERE / "sparql"   / "hallucination_check.rq"
 ROUTING_RQ   = _HERE / "sparql"   / "solver_routing.rq"
 SHACL_FILE   = _HERE / "shapes"   / "pde_constraints.shacl"
@@ -114,9 +116,10 @@ class RoutingDecision:
     session:     ProvSession
     norm_params: dict[str, NormalizationResult]
     problem_uri: URIRef
-    violations:  list[dict]  = field(default_factory=list)
-    warnings:    list[str]   = field(default_factory=list)
-    ok:          bool        = True
+    violations:  list[dict]        = field(default_factory=list)
+    warnings:    list[str]         = field(default_factory=list)
+    ok:          bool              = True
+    material:    Optional[MaterialProps] = None   # Phase 2: resolved material
 
 
 class OntologyRouter:
@@ -128,7 +131,8 @@ class OntologyRouter:
     def __init__(self, compliance_std: str = "NONE"):
         self.compliance_std = compliance_std
         self._base_graph    = Graph()
-        self._base_graph.parse(str(ONTOLOGY_TTL), format="turtle")
+        self._base_graph.parse(str(ONTOLOGY_TTL),  format="turtle")
+        self._base_graph.parse(str(MATERIALS_TTL), format="turtle")  # Phase 2
         self._halluc_query  = HALLUC_RQ.read_text(encoding="utf-8")
         self._routing_query = ROUTING_RQ.read_text(encoding="utf-8")
 
@@ -184,6 +188,23 @@ class OntologyRouter:
             except ValueError as e:
                 raise RuntimeError(f"Unit normalization failed:\n{e}") from e
 
+        # ── Step 4b: Phase 2 — 材料库解析
+        material: Optional[MaterialProps] = None
+        material_name = llm_json.get("material")
+        if material_name:
+            t_m0 = _now()
+            material = self._resolve_material(material_name, norm_params, warnings)
+            t_m1 = _now()
+            mat_ent = session.record_entity(
+                "material_resolution",
+                f"Material resolved: {material.name} ({material.category})",
+                derived_from=valid_ent,
+                extra={"materialName": material.name,
+                       "thermalDiffusivity": str(material.alpha)},
+            )
+            session.record_step("MaterialResolution", AGENT_REASONER,
+                                [valid_ent], [mat_ent], t_m0, t_m1)
+
         # ── Step 5: 求解器路由
         t4 = _now()
         solver_uri   = self._route_solver(g, problem_uri)
@@ -205,9 +226,58 @@ class OntologyRouter:
             violations  = violations,
             warnings    = warnings,
             ok          = True,
+            material    = material,
         )
 
     # ── Private helpers ──────────────────────────────────────────
+
+    def _resolve_material(
+        self,
+        name: str,
+        norm_params: dict[str, NormalizationResult],
+        warnings: list[str],
+    ) -> MaterialProps:
+        """
+        Phase 2: resolve material name → MaterialProps via material library.
+        Auto-injects thermal_diffusivity into norm_params if not already present.
+        Raises RuntimeError on unknown material.
+        """
+        try:
+            mat = get_material(name)
+        except ValueError as e:
+            raise RuntimeError(f"Material resolution failed: {e}") from e
+
+        # Auto-inject α if the caller didn't specify it explicitly
+        if "thermal_diffusivity" not in norm_params and mat.alpha is not None:
+            norm_params["thermal_diffusivity"] = NormalizationResult(
+                si_value       = mat.alpha,
+                si_unit        = "M2-PER-SEC",
+                quantity_kind  = "ThermalDiffusivity",
+                original_value = mat.alpha,
+                original_unit  = "M2-PER-SEC",
+                in_physical_range = True,
+            )
+
+        # Also inject k, rho, cp if absent
+        _injections = {
+            "thermal_conductivity":  (mat.k,   "W-PER-M-K",  "ThermalConductivity"),
+            "density":               (mat.rho,  "KG-PER-M3",  "Density"),
+            "specific_heat_capacity":(mat.cp,   "J-PER-KG-K", "SpecificHeatCapacity"),
+        }
+        for param, (val, unit, kind) in _injections.items():
+            if param not in norm_params:
+                norm_params[param] = NormalizationResult(
+                    si_value=val, si_unit=unit, quantity_kind=kind,
+                    original_value=val, original_unit=unit, in_physical_range=True,
+                )
+
+        if mat.mu is not None and "dynamic_viscosity" not in norm_params:
+            norm_params["dynamic_viscosity"] = NormalizationResult(
+                si_value=mat.mu, si_unit="PA-SEC", quantity_kind="DynamicViscosity",
+                original_value=mat.mu, original_unit="PA-SEC", in_physical_range=True,
+            )
+
+        return mat
 
     def _instantiate(
         self, llm_json: dict, session: ProvSession

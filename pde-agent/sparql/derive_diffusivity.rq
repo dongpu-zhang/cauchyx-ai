@@ -1,0 +1,34 @@
+# derive_diffusivity.rq
+# SPARQL CONSTRUCT rule: derive thermal diffusivity α from first principles.
+# α = k / (ρ · cp)   [m²/s]
+#
+# Run this CONSTRUCT against materials.ttl to materialise derived triples.
+# All values assumed to be in SI units (W/(m·K), kg/m³, J/(kg·K)).
+#
+# Usage in Python:
+#   from rdflib import Graph
+#   g = Graph().parse("ontology/materials.ttl", format="turtle")
+#   q = open("sparql/derive_diffusivity.rq").read()
+#   derived = g.query(q)          # returns a Graph of new triples
+#   g += derived                  # merge into base graph
+
+PREFIX pde:  <http://cauchyx.ai/pde#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+
+CONSTRUCT {
+    ?mat pde:thermalDiffusivity ?alpha .
+}
+WHERE {
+    ?mat a ?catClass ;
+         pde:thermalConductivity  ?k ;
+         pde:density               ?rho ;
+         pde:specificHeatCapacity  ?cp .
+
+    ?catClass rdfs:subClassOf pde:Material .
+
+    # Exclude materials that already have an explicit α
+    FILTER NOT EXISTS { ?mat pde:thermalDiffusivity ?existing }
+
+    BIND(xsd:double(?k / (?rho * ?cp)) AS ?alpha)
+}
