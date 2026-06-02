@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RegWatch — OPC Environmental Compliance Monitor</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a26;--border:#2a2a3e;
+      --cyan:#00ccee;--gold:#d4a017;--purple:#7c3aed;--green:#4ade80;
+      --red:#f87171;--text:#e2e8f0;--muted:#94a3b8;
+      --mono:'JetBrains Mono','Fira Code',monospace;
+      --sans:'Inter','Segoe UI',system-ui,sans-serif;
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+
+    /* ── HEADER ── */
+    header{
+      background:linear-gradient(135deg,#0d0d1a,#121220);
+      border-bottom:1px solid var(--border);
+      padding:3rem 2rem 2.5rem;text-align:center;
+      position:relative;overflow:hidden;
+    }
+    header::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(212,160,23,0.10) 0%,transparent 70%);
+      pointer-events:none;
+    }
+    .badge{
+      display:inline-block;font-family:var(--mono);font-size:.72rem;
+      padding:.25rem .8rem;border-radius:20px;letter-spacing:.08em;
+      background:rgba(212,160,23,.12);color:var(--gold);
+      border:1px solid rgba(212,160,23,.3);margin-bottom:1rem;
+    }
+    h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;letter-spacing:-.02em;margin-bottom:.5rem}
+    h1 span{color:var(--gold)}
+    .sub{color:var(--muted);font-size:1rem;max-width:680px;margin:.5rem auto 0}
+
+    /* ── SECTIONS ── */
+    section{max-width:1000px;margin:0 auto;padding:3rem 1.5rem}
+    .section-label{
+      font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;
+      text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;
+    }
+    h2{font-size:1.5rem;font-weight:700;margin-bottom:1.5rem}
+    h2 .hl{color:var(--cyan)}
+    h2 .hlg{color:var(--gold)}
+
+    /* ── BIZ MODEL STRIP ── */
+    .biz-strip{
+      display:flex;align-items:center;justify-content:center;
+      gap:0;flex-wrap:wrap;margin:2rem 0;
+    }
+    .biz-node{
+      padding:1rem 1.5rem;border-radius:10px;text-align:center;
+      border:1px solid var(--border);background:var(--bg2);min-width:130px;
+    }
+    .biz-node .val{font-size:1.6rem;font-weight:700;font-family:var(--mono)}
+    .biz-node .lbl{font-size:.78rem;color:var(--muted);margin-top:.2rem}
+    .biz-arrow{padding:0 .75rem;color:var(--muted);font-size:1.4rem}
+    .c{color:var(--green)}.p{color:var(--purple)}.g{color:var(--gold)}
+
+    .scale-table{
+      width:100%;border-collapse:collapse;font-size:.85rem;margin-top:1.5rem;
+    }
+    .scale-table th{
+      font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;
+      color:var(--muted);border-bottom:1px solid var(--border);
+      padding:.5rem .75rem;text-align:left;
+    }
+    .scale-table td{padding:.5rem .75rem;border-bottom:1px solid rgba(255,255,255,.04)}
+    .scale-table tr:hover td{background:rgba(255,255,255,.02)}
+    .n1{color:var(--green)}.n2{color:var(--cyan)}.n3{color:var(--gold)}
+
+    /* ── SVG WRAP ── */
+    .svg-wrap{
+      width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;
+      border:1px solid rgba(0,204,238,.18);border-radius:12px;
+      background:rgba(0,0,0,.4);padding:1.5rem;margin-top:1rem;
+    }
+    .svg-wrap svg{display:block;max-width:100%;height:auto}
+    .svg-caption{
+      font-family:var(--mono);font-size:.72rem;color:var(--muted);
+      text-align:center;margin-top:.75rem;
+    }
+
+    /* ── ALERT MOCK ── */
+    .alert-mock{
+      border:1px solid rgba(212,160,23,.3);border-radius:10px;
+      background:var(--bg2);margin-top:1rem;overflow:hidden;
+    }
+    .alert-mock-bar{
+      background:rgba(212,160,23,.1);border-bottom:1px solid rgba(212,160,23,.2);
+      padding:.6rem 1rem;font-family:var(--mono);font-size:.75rem;
+      display:flex;gap:.5rem;align-items:center;
+    }
+    .dot{width:10px;height:10px;border-radius:50%}
+    .dr{background:#f87171}.dy{background:#fbbf24}.dg{background:#4ade80}
+    .alert-mock-body{padding:1.25rem 1.5rem;font-size:.88rem;line-height:1.8}
+    .am-subject{
+      font-family:var(--mono);font-size:.82rem;
+      color:var(--gold);margin-bottom:.75rem;font-weight:600;
+    }
+    .am-hi{color:var(--red);font-weight:700}
+    .am-mid{color:#fbbf24;font-weight:700}
+    .am-step{color:var(--cyan);font-family:var(--mono);font-size:.82rem}
+    .am-footer{
+      margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--border);
+      font-size:.78rem;color:var(--muted);
+    }
+
+    /* ── AGENT CARDS ── */
+    .agent-grid{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+      gap:1rem;margin-top:1rem;
+    }
+    .agent-card{
+      border:1px solid var(--border);border-radius:10px;
+      background:var(--bg2);padding:1rem 1.2rem;
+    }
+    .agent-card.a1{border-left:3px solid var(--cyan)}
+    .agent-card.a2{border-left:3px solid #60a5fa}
+    .agent-card.a3{border-left:3px solid var(--purple)}
+    .agent-card.a4{border-left:3px solid var(--gold)}
+    .agent-card.a5{border-left:3px solid var(--red)}
+    .agent-card.a6{border-left:3px solid var(--green)}
+    .agent-card.a7{border-left:3px solid #a78bfa}
+    .ac-name{font-family:var(--mono);font-size:.82rem;font-weight:700;margin-bottom:.3rem}
+    .ac-role{font-size:.75rem;color:var(--muted);margin-bottom:.6rem}
+    .ac-body{font-size:.82rem;color:var(--text);line-height:1.6}
+    .ac-tag{
+      display:inline-block;font-family:var(--mono);font-size:.65rem;
+      padding:.1rem .4rem;border-radius:3px;
+      background:rgba(0,204,238,.1);color:var(--cyan);margin-top:.5rem;margin-right:.3rem;
+    }
+
+    /* ── ECON CARDS ── */
+    .econ-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:1rem}
+    .econ-card{
+      border:1px solid var(--border);border-radius:10px;
+      background:var(--bg2);padding:1.2rem;text-align:center;
+    }
+    .econ-val{font-size:1.8rem;font-weight:700;font-family:var(--mono)}
+    .econ-lbl{font-size:.78rem;color:var(--muted);margin-top:.3rem}
+    hr.sep{border:none;border-top:1px solid var(--border);margin:0}
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="badge">OPC Scenario — RegWatch</div>
+  <h1>Reg<span>Watch</span></h1>
+  <p class="sub">
+    Environmental Compliance Monitor for Restaurants<br>
+    一位环保法规专家，通过 OPC 平台，24/7 自动监控政府法规 → 解读 → 预警 → 服务全美餐馆
+  </p>
+</header>
+
+<hr class="sep">
+
+<!-- ── BUSINESS MODEL ── -->
+<section>
+  <p class="section-label">Business Model</p>
+  <h2>收费结构与规模效益</h2>
+
+  <div class="biz-strip">
+    <div class="biz-node">
+      <div class="val c">$5</div>
+      <div class="lbl">餐馆订阅<br>/月/家</div>
+    </div>
+    <div class="biz-arrow">→</div>
+    <div class="biz-node" style="border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08)">
+      <div class="val p">20%</div>
+      <div class="lbl">OPC 平台<br>服务费 = $1</div>
+    </div>
+    <div class="biz-arrow">→</div>
+    <div class="biz-node">
+      <div class="val g">$4</div>
+      <div class="lbl">专家净收入<br>/月/家</div>
+    </div>
+  </div>
+
+  <table class="scale-table">
+    <thead>
+      <tr>
+        <th>订阅餐馆数</th>
+        <th>月度总收入</th>
+        <th>OPC 平台服务费</th>
+        <th>专家净收入</th>
+        <th>扣除运营成本后</th>
+        <th>毛利率（专家）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>50 家</td><td>$250</td><td class="p">$50</td><td>$200</td><td class="n1">~$182</td><td class="n1">73%</td></tr>
+      <tr><td>200 家</td><td>$1,000</td><td class="p">$200</td><td>$800</td><td class="n1">~$780</td><td class="n1">78%</td></tr>
+      <tr><td>500 家</td><td>$2,500</td><td class="p">$500</td><td>$2,000</td><td class="n2">~$1,965</td><td class="n2">79%</td></tr>
+      <tr><td>1,000 家</td><td>$5,000</td><td class="p">$1,000</td><td>$4,000</td><td class="n2">~$3,952</td><td class="n2">~80%</td></tr>
+      <tr><td>5,000 家</td><td>$25,000</td><td class="p">$5,000</td><td>$20,000</td><td class="n3">~$19,900</td><td class="n3">~80%</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:.78rem;color:var(--muted);margin-top:.6rem">
+    * 运营成本 = Claude API + 邮件 + SMS，随规模线性增长，每家约 $0.10/月
+  </p>
+</section>
+
+<hr class="sep">
+
+<!-- ── SYSTEM ARCHITECTURE ── -->
+<section>
+  <p class="section-label">System Architecture</p>
+  <h2>RegWatch <span class="hl">系统架构总览</span></h2>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 920 480" xmlns="http://www.w3.org/2000/svg"
+         font-family="'JetBrains Mono','Fira Code',monospace" font-size="11">
+      <defs>
+        <marker id="a0" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#00ccee" opacity=".8"/>
+        </marker>
+        <marker id="ag" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#4ade80" opacity=".8"/>
+        </marker>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#f87171" opacity=".8"/>
+        </marker>
+        <marker id="ap" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa" opacity=".8"/>
+        </marker>
+        <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+
+      <!-- ── GOV SOURCES (left) ── -->
+      <rect x="10" y="60" width="150" height="240" rx="8" fill="none" stroke="rgba(212,160,23,.3)" stroke-width="1.2" stroke-dasharray="5,3"/>
+      <text x="85" y="80" text-anchor="middle" fill="#d4a017" font-size="9.5" font-weight="700" letter-spacing=".5">政府监控来源</text>
+
+      <rect x="20" y="90" width="130" height="26" rx="4" fill="rgba(212,160,23,.08)" stroke="rgba(212,160,23,.3)" stroke-width="1"/>
+      <text x="85" y="106" text-anchor="middle" fill="#e8c060" font-size="9.5">EPA.gov</text>
+
+      <rect x="20" y="124" width="130" height="26" rx="4" fill="rgba(212,160,23,.08)" stroke="rgba(212,160,23,.3)" stroke-width="1"/>
+      <text x="85" y="140" text-anchor="middle" fill="#e8c060" font-size="9.5">FDA.gov</text>
+
+      <rect x="20" y="158" width="130" height="26" rx="4" fill="rgba(212,160,23,.08)" stroke="rgba(212,160,23,.3)" stroke-width="1"/>
+      <text x="85" y="174" text-anchor="middle" fill="#e8c060" font-size="9.5">州 DEQ 网站</text>
+
+      <rect x="20" y="192" width="130" height="26" rx="4" fill="rgba(212,160,23,.08)" stroke="rgba(212,160,23,.3)" stroke-width="1"/>
+      <text x="85" y="208" text-anchor="middle" fill="#e8c060" font-size="9.5">市政卫生局</text>
+
+      <rect x="20" y="226" width="130" height="26" rx="4" fill="rgba(212,160,23,.08)" stroke="rgba(212,160,23,.3)" stroke-width="1"/>
+      <text x="85" y="242" text-anchor="middle" fill="#e8c060" font-size="9.5">CalRecycle</text>
+
+      <text x="85" y="272" text-anchor="middle" fill="#a07820" font-size="8.5">每周一 06:00 自动扫描</text>
+
+      <!-- arrows gov → OPC -->
+      <line x1="160" y1="103" x2="240" y2="168" stroke="#d4a017" stroke-width="1" opacity=".5" marker-end="url(#a0)"/>
+      <line x1="160" y1="137" x2="240" y2="185" stroke="#d4a017" stroke-width="1" opacity=".5" marker-end="url(#a0)"/>
+      <line x1="160" y1="171" x2="240" y2="200" stroke="#d4a017" stroke-width="1" opacity=".5" marker-end="url(#a0)"/>
+      <line x1="160" y1="205" x2="240" y2="215" stroke="#d4a017" stroke-width="1" opacity=".5" marker-end="url(#a0)"/>
+
+      <!-- ── OPC PLATFORM (center) ── -->
+      <rect x="240" y="20" width="440" height="420" rx="10" fill="rgba(0,204,238,.03)" stroke="rgba(0,204,238,.25)" stroke-width="1.5"/>
+      <text x="460" y="44" text-anchor="middle" fill="#00ccee" font-size="11" font-weight="700" letter-spacing=".5">OPC Agent Matrix — RegWatch</text>
+      <text x="460" y="58" text-anchor="middle" fill="#4fa8b8" font-size="8.5">Harness OPC Platform · 云端全自动运行</text>
+
+      <!-- Planner -->
+      <rect x="340" y="70" width="240" height="38" rx="6" fill="rgba(0,204,238,.09)" stroke="#00ccee" stroke-width="1.5" filter="url(#glow)"/>
+      <text x="460" y="87" text-anchor="middle" fill="#00ccee" font-size="10" font-weight="700">Planner Agent</text>
+      <text x="460" y="100" text-anchor="middle" fill="#5db8c8" font-size="8.5">Think · 加载记忆 · 制定本周扫描任务</text>
+
+      <!-- arrow down -->
+      <line x1="460" y1="108" x2="460" y2="122" stroke="#00ccee" stroke-width="1.2" opacity=".6" marker-end="url(#a0)"/>
+
+      <!-- 4 execution agents in 2x2 -->
+      <rect x="256" y="122" width="200" height="38" rx="5" fill="rgba(96,165,250,.08)" stroke="rgba(96,165,250,.4)" stroke-width="1"/>
+      <text x="356" y="138" text-anchor="middle" fill="#93c5fd" font-size="9.5" font-weight="600">RegScanner Agent</text>
+      <text x="356" y="152" text-anchor="middle" fill="#5a80a8" font-size="8">抓取 + 筛选新法规</text>
+
+      <rect x="464" y="122" width="200" height="38" rx="5" fill="rgba(96,165,250,.08)" stroke="rgba(96,165,250,.4)" stroke-width="1"/>
+      <text x="564" y="138" text-anchor="middle" fill="#93c5fd" font-size="9.5" font-weight="600">LegalInterpreter Agent</text>
+      <text x="564" y="152" text-anchor="middle" fill="#5a80a8" font-size="8">法律原文 → 3 句话摘要</text>
+
+      <!-- arrow between -->
+      <line x1="456" y1="141" x2="466" y2="141" stroke="rgba(96,165,250,.5)" stroke-width="1" marker-end="url(#a0)"/>
+
+      <rect x="256" y="172" width="200" height="38" rx="5" fill="rgba(96,165,250,.08)" stroke="rgba(96,165,250,.4)" stroke-width="1"/>
+      <text x="356" y="188" text-anchor="middle" fill="#93c5fd" font-size="9.5" font-weight="600">RiskMapper Agent</text>
+      <text x="356" y="202" text-anchor="middle" fill="#5a80a8" font-size="8">法规 × 餐馆档案 → 受影响名单</text>
+
+      <rect x="464" y="172" width="200" height="38" rx="5" fill="rgba(96,165,250,.08)" stroke="rgba(96,165,250,.4)" stroke-width="1"/>
+      <text x="564" y="188" text-anchor="middle" fill="#93c5fd" font-size="9.5" font-weight="600">AlertComposer Agent</text>
+      <text x="564" y="202" text-anchor="middle" fill="#5a80a8" font-size="8">生成个性化预警邮件</text>
+
+      <!-- flow arrows row2 -->
+      <line x1="356" y1="160" x2="356" y2="172" stroke="rgba(96,165,250,.5)" stroke-width="1" marker-end="url(#a0)"/>
+      <line x1="456" y1="191" x2="466" y2="191" stroke="rgba(96,165,250,.5)" stroke-width="1" marker-end="url(#a0)"/>
+      <line x1="564" y1="160" x2="564" y2="172" stroke="rgba(96,165,250,.5)" stroke-width="1" marker-end="url(#a0)"/>
+
+      <!-- Critic -->
+      <rect x="340" y="222" width="240" height="38" rx="6" fill="rgba(248,113,113,.08)" stroke="rgba(248,113,113,.4)" stroke-width="1.2"/>
+      <text x="460" y="239" text-anchor="middle" fill="#fca5a5" font-size="9.5" font-weight="700">Critic Agent</text>
+      <text x="460" y="253" text-anchor="middle" fill="#8a5050" font-size="8">质量评分 0-10 · ≥8 通过 · &lt;7 打回重写</text>
+
+      <!-- arrows to critic -->
+      <line x1="460" y1="210" x2="460" y2="222" stroke="rgba(248,113,113,.5)" stroke-width="1" marker-end="url(#ar)"/>
+      <!-- feedback loop -->
+      <path d="M340,241 Q295,241 295,191 Q295,141 340,141" fill="none" stroke="#f87171" stroke-width="1" stroke-dasharray="4,3" opacity=".6" marker-end="url(#ar)"/>
+      <text x="285" y="195" fill="#f87171" font-size="8" text-anchor="middle">score</text>
+      <text x="285" y="205" fill="#f87171" font-size="8" text-anchor="middle">&lt; 7</text>
+
+      <!-- Expert Review -->
+      <rect x="340" y="272" width="240" height="38" rx="6" fill="rgba(212,160,23,.08)" stroke="rgba(212,160,23,.35)" stroke-width="1.2"/>
+      <text x="460" y="289" text-anchor="middle" fill="#d4a017" font-size="9.5" font-weight="700">专家审核（15 分钟 / 周）</text>
+      <text x="460" y="303" text-anchor="middle" fill="#8a6800" font-size="8">OPC Web 控制台 · 审核 → 批准 → 发送</text>
+      <line x1="460" y1="260" x2="460" y2="272" stroke="rgba(212,160,23,.5)" stroke-width="1" marker-end="url(#a0)"/>
+
+      <!-- Dispatcher -->
+      <rect x="340" y="322" width="240" height="38" rx="6" fill="rgba(74,222,128,.08)" stroke="rgba(74,222,128,.35)" stroke-width="1.2"/>
+      <text x="460" y="339" text-anchor="middle" fill="#4ade80" font-size="9.5" font-weight="700">Dispatcher Agent</text>
+      <text x="460" y="353" text-anchor="middle" fill="#2a7a50" font-size="8">Email (Resend) + SMS (Twilio) 多渠道发送</text>
+      <line x1="460" y1="310" x2="460" y2="322" stroke="rgba(74,222,128,.5)" stroke-width="1" marker-end="url(#ag)"/>
+
+      <!-- Memory -->
+      <rect x="256" y="372" width="200" height="38" rx="5" fill="rgba(124,58,237,.08)" stroke="rgba(124,58,237,.4)" stroke-width="1"/>
+      <text x="356" y="388" text-anchor="middle" fill="#a78bfa" font-size="9.5" font-weight="600">Memory Agent</text>
+      <text x="356" y="402" text-anchor="middle" fill="#5a3a8a" font-size="8">更新 ChromaDB · 合规状态 · 经验积累</text>
+
+      <!-- QA -->
+      <rect x="464" y="372" width="200" height="38" rx="5" fill="rgba(74,222,128,.08)" stroke="rgba(74,222,128,.3)" stroke-width="1"/>
+      <text x="564" y="388" text-anchor="middle" fill="#86efac" font-size="9.5" font-weight="600">QA Agent（24/7）</text>
+      <text x="564" y="402" text-anchor="middle" fill="#2a7a50" font-size="8">回答餐馆跟进问题</text>
+
+      <line x1="460" y1="360" x2="356" y2="372" stroke="rgba(124,58,237,.5)" stroke-width="1" marker-end="url(#ap)"/>
+      <line x1="460" y1="360" x2="564" y2="372" stroke="rgba(74,222,128,.5)" stroke-width="1" marker-end="url(#ag)"/>
+
+      <!-- ── RESTAURANTS (right) ── -->
+      <!-- arrows opc → restaurants -->
+      <line x1="680" y1="340" x2="750" y2="220" stroke="#4ade80" stroke-width="1.3" opacity=".6" marker-end="url(#ag)"/>
+      <line x1="680" y1="390" x2="750" y2="340" stroke="#4ade80" stroke-width="1" opacity=".4" stroke-dasharray="4,3" marker-end="url(#ag)"/>
+
+      <!-- ── RESTAURANTS (right column) ── -->
+      <rect x="750" y="60" width="155" height="310" rx="8" fill="none" stroke="rgba(74,222,128,.25)" stroke-width="1.2" stroke-dasharray="5,3"/>
+      <text x="827" y="80" text-anchor="middle" fill="#4ade80" font-size="9.5" font-weight="700">订阅餐馆</text>
+      <text x="827" y="93" text-anchor="middle" fill="#2a7a50" font-size="8">200 家（示例）</text>
+
+      <!-- restaurant icons (rects as placeholders) -->
+      <rect x="762" y="102" width="130" height="30" rx="4" fill="rgba(74,222,128,.07)" stroke="rgba(74,222,128,.25)" stroke-width="1"/>
+      <text x="827" y="121" text-anchor="middle" fill="#86efac" font-size="9">🍜 Golden Dragon · 奥克兰 CA</text>
+
+      <rect x="762" y="140" width="130" height="30" rx="4" fill="rgba(74,222,128,.07)" stroke="rgba(74,222,128,.25)" stroke-width="1"/>
+      <text x="827" y="159" text-anchor="middle" fill="#86efac" font-size="9">🌮 Casa Bonita · 洛杉矶 CA</text>
+
+      <rect x="762" y="178" width="130" height="30" rx="4" fill="rgba(74,222,128,.07)" stroke="rgba(74,222,128,.25)" stroke-width="1"/>
+      <text x="827" y="197" text-anchor="middle" fill="#86efac" font-size="9">🍔 BBQ Corner · 达拉斯 TX</text>
+
+      <rect x="762" y="216" width="130" height="30" rx="4" fill="rgba(74,222,128,.07)" stroke="rgba(74,222,128,.25)" stroke-width="1"/>
+      <text x="827" y="235" text-anchor="middle" fill="#86efac" font-size="9">🍣 Sakura · 圣何塞 CA</text>
+
+      <text x="827" y="265" text-anchor="middle" fill="#2a7a50" font-size="8.5">· · · 共 200 家 · · ·</text>
+
+      <rect x="762" y="275" width="130" height="28" rx="4" fill="rgba(74,222,128,.07)" stroke="rgba(74,222,128,.25)" stroke-width="1"/>
+      <text x="827" y="292" text-anchor="middle" fill="#4ade80" font-size="9">每月付 $5 订阅费</text>
+
+      <!-- ── EXPERT (bottom) ── -->
+      <rect x="260" y="435" width="400" height="34" rx="6" fill="rgba(212,160,23,.06)" stroke="rgba(212,160,23,.25)" stroke-width="1"/>
+      <text x="460" y="449" text-anchor="middle" fill="#d4a017" font-size="9.5">环保合规专家  ·  每周 15 分钟  ·  月净收入 $780（200家）</text>
+      <text x="460" y="463" text-anchor="middle" fill="#8a6800" font-size="8.5">OPC 控制台：审核预警 · 查看收入报告 · 扩展知识库</text>
+
+      <!-- money flows -->
+      <text x="745" y="350" fill="#4ade80" font-size="8" text-anchor="middle">Email/SMS</text>
+      <text x="745" y="362" fill="#2a7a50" font-size="8" text-anchor="middle">预警</text>
+
+      <!-- LEGEND -->
+      <rect x="10" y="380" width="220" height="88" rx="6" fill="rgba(0,0,0,.3)" stroke="var(--border)" stroke-width="1"/>
+      <text x="20" y="396" fill="#94a3b8" font-size="8.5" font-weight="600">图例</text>
+      <line x1="20" y1="408" x2="50" y2="408" stroke="#00ccee" stroke-width="1.3" marker-end="url(#a0)"/>
+      <text x="55" y="412" fill="#94a3b8" font-size="8">数据流 / 法规信息</text>
+      <line x1="20" y1="424" x2="50" y2="424" stroke="#4ade80" stroke-width="1.3" marker-end="url(#ag)"/>
+      <text x="55" y="428" fill="#94a3b8" font-size="8">预警发送</text>
+      <line x1="20" y1="440" x2="50" y2="440" stroke="#f87171" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ar)"/>
+      <text x="55" y="444" fill="#94a3b8" font-size="8">质量反馈（打回重写）</text>
+      <line x1="20" y1="456" x2="50" y2="456" stroke="#a78bfa" stroke-width="1" marker-end="url(#ap)"/>
+      <text x="55" y="460" fill="#94a3b8" font-size="8">记忆更新</text>
+    </svg>
+  </div>
+  <p class="svg-caption">RegWatch 系统架构 — 政府来源 → 6 Agent 流水线 → 餐馆预警</p>
+</section>
+
+<hr class="sep">
+
+<!-- ── PIPELINE FLOW ── -->
+<section>
+  <p class="section-label">Weekly Automation Pipeline</p>
+  <h2>每周自动化 <span class="hl">运行时序图</span></h2>
+
+  <div class="svg-wrap">
+    <svg viewBox="0 0 900 640" xmlns="http://www.w3.org/2000/svg"
+         font-family="'JetBrains Mono','Fira Code',monospace" font-size="11">
+      <defs>
+        <marker id="b0" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#00ccee" opacity=".8"/>
+        </marker>
+        <marker id="bg" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#4ade80" opacity=".8"/>
+        </marker>
+        <marker id="br" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#f87171" opacity=".8"/>
+        </marker>
+        <filter id="glow2"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+
+      <!-- Time axis label -->
+      <text x="40" y="22" fill="#94a3b8" font-size="9" font-weight="700">时间</text>
+      <line x1="40" y1="28" x2="40" y2="620" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+
+      <!-- ── STEP 0: TRIGGER ── -->
+      <text x="40" y="55" fill="#94a3b8" font-size="8.5" text-anchor="middle">06:00</text>
+      <rect x="65" y="38" width="780" height="34" rx="6" fill="rgba(212,160,23,.07)" stroke="rgba(212,160,23,.3)" stroke-width="1"/>
+      <text x="455" y="53" text-anchor="middle" fill="#d4a017" font-size="10" font-weight="700">⏱  OPC Cron 触发 — 每周一 06:00 UTC 自动启动 RegWatch 循环</text>
+      <text x="455" y="65" text-anchor="middle" fill="#8a6800" font-size="8.5">无需专家操作，平台自动调度</text>
+
+      <!-- down arrow -->
+      <line x1="455" y1="72" x2="455" y2="86" stroke="#00ccee" stroke-width="1.3" opacity=".6" marker-end="url(#b0)"/>
+
+      <!-- ── STEP 1: PLANNER ── -->
+      <text x="40" y="110" fill="#94a3b8" font-size="8.5" text-anchor="middle">06:01</text>
+      <rect x="65" y="86" width="780" height="48" rx="6" fill="rgba(0,204,238,.07)" stroke="rgba(0,204,238,.35)" stroke-width="1.3" filter="url(#glow2)"/>
+      <text x="150" y="101" fill="#00ccee" font-size="9.5" font-weight="700">① Planner Agent</text>
+      <text x="150" y="115" fill="#4fa8b8" font-size="8.5">Think · 从 ChromaDB 加载上周记忆 → 制定本周 4 个扫描任务</text>
+      <text x="150" y="127" fill="#4fa8b8" font-size="8">输出：[ EPA.gov 扫描 | FDA.gov 扫描 | 州 DEQ 扫描 | CalRecycle 扫描 ]</text>
+      <!-- memory read arrow -->
+      <line x1="790" y1="110" x2="840" y2="110" stroke="rgba(124,58,237,.6)" stroke-width="1" stroke-dasharray="3,2"/>
+      <rect x="840" y="96" width="50" height="28" rx="4" fill="rgba(124,58,237,.12)" stroke="rgba(124,58,237,.4)" stroke-width="1"/>
+      <text x="865" y="112" text-anchor="middle" fill="#a78bfa" font-size="8">Memory</text>
+
+      <line x1="455" y1="134" x2="455" y2="148" stroke="#00ccee" stroke-width="1.3" opacity=".6" marker-end="url(#b0)"/>
+
+      <!-- ── STEP 2: REGSCANNER ── -->
+      <text x="40" y="168" fill="#94a3b8" font-size="8.5" text-anchor="middle">06:05</text>
+      <rect x="65" y="148" width="780" height="48" rx="6" fill="rgba(96,165,250,.07)" stroke="rgba(96,165,250,.35)" stroke-width="1"/>
+      <text x="150" y="163" fill="#93c5fd" font-size="9.5" font-weight="700">② RegScanner Agent</text>
+      <text x="150" y="177" fill="#5a80a8" font-size="8.5">Do · Playwright 无头浏览器并行抓取 4 个来源，RSS + PDF 解析</text>
+      <text x="150" y="189" fill="#5a80a8" font-size="8">发现：[ EPA 40 CFR Part 453 修订（NEW）| CalRecycle SB 1383 执法更新（UPDATED）]</text>
+
+      <line x1="455" y1="196" x2="455" y2="210" stroke="#00ccee" stroke-width="1.3" opacity=".6" marker-end="url(#b0)"/>
+
+      <!-- ── STEP 3: LEGAL ── -->
+      <text x="40" y="233" fill="#94a3b8" font-size="8.5" text-anchor="middle">06:18</text>
+      <rect x="65" y="210" width="780" height="48" rx="6" fill="rgba(96,165,250,.07)" stroke="rgba(96,165,250,.35)" stroke-width="1"/>
+      <text x="150" y="225" fill="#93c5fd" font-size="9.5" font-weight="700">③ LegalInterpreter Agent</text>
+      <text x="150" y="239" fill="#5a80a8" font-size="8.5">Do · 调用专家微调模型，将法规原文解读为餐馆主能看懂的语言</text>
+      <text x="150" y="251" fill="#5a80a8" font-size="8">输出：摘要 + 生效日期 + 罚款金额 + 受影响餐馆类型（每条法规各一份）</text>
+
+      <line x1="455" y1="258" x2="455" y2="272" stroke="#00ccee" stroke-width="1.3" opacity=".6" marker-end="url(#b0)"/>
+
+      <!-- ── STEP 4: RISKMAPPER ── -->
+      <text x="40" y="295" fill="#94a3b8" font-size="8.5" text-anchor="middle">06:25</text>
+      <rect x="65" y="272" width="780" height="48" rx="6" fill="rgba(96,165,250,.07)" stroke="rgba(96,165,250,.35)" stroke-width="1"/>
+      <text x="150" y="287" fill="#93c5fd" font-size="9.5" font-weight="700">④ RiskMapper Agent</text>
+      <text x="150" y="301" fill="#5a80a8" font-size="8.5">Do · 查询 PostgreSQL 餐馆档案，匹配受影响范围</text>
+      <text x="150" y="313" fill="#5a80a8" font-size="8">结果：EPA 新规 → 49 家（高风险）· CalRecycle → 150 家（中风险）· 德州 50 家（无影响）</text>
+
+      <line x1="455" y1="320" x2="455" y2="334" stroke="#00ccee" stroke-width="1.3" opacity=".6" marker-end="url(#b0)"/>
+
+      <!-- ── STEP 5: ALERT COMPOSER ── -->
+      <text x="40" y="357" fill="#94a3b8" font-size="8.5" text-anchor="middle">06:31</text>
+      <rect x="65" y="334" width="780" height="48" rx="6" fill="rgba(96,165,250,.07)" stroke="rgba(96,165,250,.35)" stroke-width="1"/>
+      <text x="150" y="349" fill="#93c5fd" font-size="9.5" font-weight="700">⑤ AlertComposer Agent</text>
+      <text x="150" y="363" fill="#5a80a8" font-size="8.5">Do · 为每家受影响餐馆生成含店名、具体风险、3 步整改建议的个性化预警</text>
+      <text x="150" y="375" fill="#5a80a8" font-size="8">生成 150 封加州预警 + 50 封德州"本周无变化"周报 · 共 200 封 · 耗时 23 分钟</text>
+
+      <line x1="455" y1="382" x2="455" y2="396" stroke="#00ccee" stroke-width="1.3" opacity=".6" marker-end="url(#b0)"/>
+
+      <!-- ── STEP 6: CRITIC ── -->
+      <text x="40" y="424" fill="#94a3b8" font-size="8.5" text-anchor="middle">06:54</text>
+      <rect x="65" y="396" width="560" height="44" rx="6" fill="rgba(248,113,113,.07)" stroke="rgba(248,113,113,.35)" stroke-width="1.2"/>
+      <text x="230" y="411" fill="#fca5a5" font-size="9.5" font-weight="700">⑥ Critic Agent</text>
+      <text x="230" y="425" fill="#8a5050" font-size="8.5">Check · 评分 9.1/10 → 通过（≥8）</text>
+      <text x="230" y="437" fill="#8a5050" font-size="8">发现：3 家高风险餐馆上月已整改 → 降级为"确认复查"</text>
+      <!-- feedback arrow (short, shows loop) -->
+      <rect x="640" y="398" width="200" height="40" rx="5" fill="rgba(248,113,113,.05)" stroke="rgba(248,113,113,.2)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="740" y="414" text-anchor="middle" fill="#f87171" font-size="8.5">若评分 &lt; 7</text>
+      <text x="740" y="428" text-anchor="middle" fill="#8a3030" font-size="8">→ 打回 AlertComposer 重写</text>
+      <text x="740" y="440" text-anchor="middle" fill="#8a3030" font-size="7.5">最多 3 轮</text>
+
+      <line x1="455" y1="440" x2="455" y2="454" stroke="rgba(212,160,23,.6)" stroke-width="1.3" marker-end="url(#b0)"/>
+
+      <!-- ── STEP 7: EXPERT ── -->
+      <text x="40" y="477" fill="#94a3b8" font-size="8.5" text-anchor="middle">07:07</text>
+      <rect x="65" y="454" width="780" height="44" rx="6" fill="rgba(212,160,23,.07)" stroke="rgba(212,160,23,.35)" stroke-width="1.3"/>
+      <text x="230" y="469" fill="#d4a017" font-size="9.5" font-weight="700">⑦ 专家审核（OPC Web 控制台 · 15 分钟）</text>
+      <text x="230" y="483" fill="#8a6800" font-size="8.5">抽查 5 封邮件内容，微调一处措辞，点击"批量批准发送"</text>
+      <text x="230" y="495" fill="#8a6800" font-size="8">全程 15 分钟 · 本周唯一的人工介入</text>
+
+      <line x1="455" y1="498" x2="455" y2="512" stroke="rgba(74,222,128,.6)" stroke-width="1.3" marker-end="url(#bg)"/>
+
+      <!-- ── STEP 8: DISPATCHER ── -->
+      <text x="40" y="535" fill="#94a3b8" font-size="8.5" text-anchor="middle">07:22</text>
+      <rect x="65" y="512" width="780" height="44" rx="6" fill="rgba(74,222,128,.07)" stroke="rgba(74,222,128,.35)" stroke-width="1.2"/>
+      <text x="230" y="527" fill="#4ade80" font-size="9.5" font-weight="700">⑧ Dispatcher Agent</text>
+      <text x="230" y="541" fill="#2a7a50" font-size="8.5">49 家高风险 → Email + SMS 同时发送 · 101 家中风险 → Email · 50 家德州 → 周报</text>
+      <text x="230" y="553" fill="#2a7a50" font-size="8">发送成功率 99%（198/200）· 全部完成：07:38</text>
+
+      <line x1="300" y1="556" x2="300" y2="570" stroke="rgba(124,58,237,.6)" stroke-width="1.3" marker-end="url(#b0)"/>
+      <line x1="600" y1="556" x2="600" y2="570" stroke="rgba(74,222,128,.6)" stroke-width="1.3" marker-end="url(#bg)"/>
+
+      <!-- ── STEP 9: MEMORY + QA ── -->
+      <text x="40" y="595" fill="#94a3b8" font-size="8.5" text-anchor="middle">08:05</text>
+      <rect x="65" y="570" width="380" height="44" rx="6" fill="rgba(124,58,237,.07)" stroke="rgba(124,58,237,.35)" stroke-width="1"/>
+      <text x="255" y="585" text-anchor="middle" fill="#a78bfa" font-size="9.5" font-weight="700">⑨ Memory Agent（Improve）</text>
+      <text x="255" y="599" text-anchor="middle" fill="#5a3a8a" font-size="8">新法规写入向量库 · 发送记录 · 合规状态时间线</text>
+      <text x="255" y="611" text-anchor="middle" fill="#5a3a8a" font-size="7.5">下周 Planner 将读取此记忆</text>
+
+      <rect x="455" y="570" width="390" height="44" rx="6" fill="rgba(74,222,128,.07)" stroke="rgba(74,222,128,.25)" stroke-width="1"/>
+      <text x="650" y="585" text-anchor="middle" fill="#86efac" font-size="9.5" font-weight="700">⑩ QA Agent（常驻 24/7）</text>
+      <text x="650" y="599" text-anchor="middle" fill="#2a7a50" font-size="8">自动回答餐馆跟进问题（本周 23 封）</text>
+      <text x="650" y="611" text-anchor="middle" fill="#2a7a50" font-size="7.5">2 封复杂问题 → 转专家处理</text>
+    </svg>
+  </div>
+  <p class="svg-caption">每周自动运行时序 — 专家全程仅需介入 15 分钟（步骤 ⑦）</p>
+</section>
+
+<hr class="sep">
+
+<!-- ── SAMPLE ALERT ── -->
+<section>
+  <p class="section-label">Simulated Output</p>
+  <h2>AlertComposer <span class="hlg">生成的预警邮件（示例）</span></h2>
+
+  <div class="alert-mock">
+    <div class="alert-mock-bar">
+      <span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span>
+      <span style="margin-left:.5rem;color:#94a3b8">来自 RegWatch · 发送至 Golden Dragon Restaurant</span>
+    </div>
+    <div class="alert-mock-body">
+      <div class="am-subject">
+        Subject: [HIGH ALERT] 2 项合规要求 — 91 天内必须处理 — Golden Dragon Restaurant
+      </div>
+      <p>Dear Golden Dragon Restaurant 负责人，</p>
+      <br>
+      <p>您的餐厅本周触发 <strong>2 项新合规警告</strong>，请尽快处理：</p>
+      <br>
+
+      <p><span class="am-hi">🔴 紧急（91 天窗口）</span></p>
+      <p><strong>EPA 室外排水油脂截留新规（40 CFR Part 453 修订）</strong></p>
+      <p>您餐厅有室外用餐区，属于受影响范围</p>
+      <p>违规后果：<strong>每天最高罚款 $10,000</strong></p>
+      <p>整改截止：<strong>2026 年 9 月 5 日（距今 91 天）</strong></p>
+      <br>
+      <p class="am-step">Step 1</p> <p>本周内联系持牌水管工（plumber）评估室外排水管位置</p>
+      <p class="am-step">Step 2</p> <p>采购二级油脂截留器（推荐型号：HY-750，约 $800–3,000）</p>
+      <p class="am-step">Step 3</p> <p>安装后保留收据和安装商资质证明，备政府检查</p>
+      <br>
+
+      <p><span class="am-mid">🟡 中度警告（7 月 1 日执法启动）</span></p>
+      <p><strong>加州 SB 1383 有机废物分类执法更新（CalRecycle）</strong></p>
+      <p>Alameda 县检查员将于 7 月起突击检查厨余分类，首次违规仅警告，<br>
+         <strong>第二次起每天罚款 $200–500，连续计算</strong></p>
+      <br>
+      <p class="am-step">Step 1</p> <p>登录 Alameda 县废物管理网站，申请免费有机废物桶（当天完成）</p>
+      <p class="am-step">Step 2</p> <p>培训厨房员工识别有机废物（厨余、食用油、纸质包装）</p>
+      <p class="am-step">Step 3</p> <p>厨房张贴分类指南（直接回复此邮件索取模板）</p>
+
+      <div class="am-footer">
+        有疑问？直接回复此邮件，AI 助手 24 小时内回复，复杂问题 24h 内由专家处理。<br>
+        — RegWatch 合规预警服务 · 由 [专家姓名] 提供 · Powered by OPC Platform<br>
+        <span style="font-size:.72rem;opacity:.6">退订请点击此处 | 本服务不构成法律建议，建议同时咨询持牌律师</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ── AGENT CARDS ── -->
+<section>
+  <p class="section-label">Agent Details</p>
+  <h2>6 个 Agent <span class="hl">职责详情</span></h2>
+  <div class="agent-grid">
+    <div class="agent-card a1">
+      <div class="ac-name">① Planner Agent</div>
+      <div class="ac-role">Think · 任务规划</div>
+      <div class="ac-body">读取上周记忆，制定本周 4 个扫描任务清单，分配优先级</div>
+      <span class="ac-tag">ChromaDB 读取</span><span class="ac-tag">Claude API</span>
+    </div>
+    <div class="agent-card a2">
+      <div class="ac-name">② RegScanner Agent</div>
+      <div class="ac-role">Do · 法规抓取</div>
+      <div class="ac-body">Playwright 无头浏览器 + RSS 订阅 + PDF 解析，并行扫描 EPA / FDA / 州 DEQ / 市政</div>
+      <span class="ac-tag">Playwright</span><span class="ac-tag">PDF Parser</span><span class="ac-tag">RSS</span>
+    </div>
+    <div class="agent-card a3">
+      <div class="ac-name">③ LegalInterpreter Agent</div>
+      <div class="ac-role">Do · 法规解读</div>
+      <div class="ac-body">调用专家微调模型，将法律原文转化为 3 句话摘要 + 罚款金额 + 受影响类型</div>
+      <span class="ac-tag">Fine-tuned Claude</span><span class="ac-tag">FTaaS</span>
+    </div>
+    <div class="agent-card a4">
+      <div class="ac-name">④ RiskMapper Agent</div>
+      <div class="ac-role">Do · 风险映射</div>
+      <div class="ac-body">SQL 查询餐馆档案，按属性匹配（室外座位/所在州/营业类型），输出受影响名单 + 风险等级</div>
+      <span class="ac-tag">PostgreSQL</span><span class="ac-tag">规则引擎</span>
+    </div>
+    <div class="agent-card a5">
+      <div class="ac-name">⑤ AlertComposer Agent</div>
+      <div class="ac-role">Do · 预警撰写</div>
+      <div class="ac-body">为每家餐馆生成含店名、具体风险点、3 步整改建议的个性化预警邮件，支持中英双语</div>
+      <span class="ac-tag">Claude API</span><span class="ac-tag">模板库</span><span class="ac-tag">个性化</span>
+    </div>
+    <div class="agent-card a6">
+      <div class="ac-name">⑥ Critic Agent</div>
+      <div class="ac-role">Check · 质量审核</div>
+      <div class="ac-body">评分 0–10，验证每封预警是否包含：违规后果金额 + 截止日期 + 3 步建议。&lt;7 分打回重写</div>
+      <span class="ac-tag">质量门控</span><span class="ac-tag">最多 3 轮</span>
+    </div>
+    <div class="agent-card a1">
+      <div class="ac-name">⑦ Dispatcher Agent</div>
+      <div class="ac-role">Do · 多渠道发送</div>
+      <div class="ac-body">高风险 → Email + SMS；中风险 → Email；低风险 → 周报合并。记录发送状态到 PostgreSQL</div>
+      <span class="ac-tag">Resend</span><span class="ac-tag">Twilio</span><span class="ac-tag">99% 成功率</span>
+    </div>
+    <div class="agent-card a7">
+      <div class="ac-name">⑧ Memory Agent</div>
+      <div class="ac-role">Improve · 记忆更新</div>
+      <div class="ac-body">将新法规写入向量库，更新各餐馆合规状态时间线，供下周 Planner 读取</div>
+      <span class="ac-tag">ChromaDB</span><span class="ac-tag">持续学习</span>
+    </div>
+    <div class="agent-card a6">
+      <div class="ac-name">⑨ QA Agent（常驻）</div>
+      <div class="ac-role">24/7 · 餐馆问答</div>
+      <div class="ac-body">回答餐馆跟进问题，引用历史预警和知识库，复杂问题转发给专家，24h 内回复</div>
+      <span class="ac-tag">Claude API</span><span class="ac-tag">知识库检索</span><span class="ac-tag">升级路由</span>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ── ECONOMICS ── -->
+<section>
+  <p class="section-label">Unit Economics</p>
+  <h2>本次运行 <span class="hlg">经济数据（200 家规模）</span></h2>
+  <div class="econ-grid">
+    <div class="econ-card">
+      <div class="econ-val" style="color:var(--cyan)">$5.05</div>
+      <div class="econ-lbl">本周 OPC 运行成本<br>（API + 邮件 + SMS）</div>
+    </div>
+    <div class="econ-card">
+      <div class="econ-val" style="color:var(--gold)">$20.20</div>
+      <div class="econ-lbl">月度运营成本<br>（4 周合计）</div>
+    </div>
+    <div class="econ-card">
+      <div class="econ-val" style="color:var(--green)">$800</div>
+      <div class="econ-lbl">专家月净收入<br>（200家 × $4）</div>
+    </div>
+    <div class="econ-card">
+      <div class="econ-val" style="color:var(--green)">~78%</div>
+      <div class="econ-lbl">专家毛利率<br>（扣除运营成本后）</div>
+    </div>
+    <div class="econ-card">
+      <div class="econ-val" style="color:var(--purple)">$200</div>
+      <div class="econ-lbl">OPC 平台月收入<br>（20% 服务费）</div>
+    </div>
+    <div class="econ-card">
+      <div class="econ-val" style="color:var(--gold)">15 min</div>
+      <div class="econ-lbl">专家每周介入时间<br>（仅审核步骤）</div>
+    </div>
+  </div>
+
+  <div style="margin-top:1.5rem;padding:1.25rem;border:1px solid rgba(74,222,128,.25);border-radius:10px;background:rgba(74,222,128,.04)">
+    <p style="font-family:var(--mono);font-size:.82rem;color:var(--green);font-weight:700;margin-bottom:.5rem">
+      专家价值主张（对比）
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:.82rem">
+      <div>
+        <p style="color:var(--muted);font-size:.75rem;margin-bottom:.4rem">使用 OPC 平台之前</p>
+        <p>每周人工追踪法规：8 小时</p>
+        <p>手写邮件通知：12 小时/月</p>
+        <p>最大服务规模：20–30 家</p>
+        <p>月收入上限：~$150</p>
+      </div>
+      <div>
+        <p style="color:var(--green);font-size:.75rem;margin-bottom:.4rem">使用 OPC 平台之后</p>
+        <p>每周人工介入：<strong style="color:var(--green)">15 分钟</strong></p>
+        <p>邮件发送：<strong style="color:var(--green)">23 分钟（AI 全自动）</strong></p>
+        <p>最大服务规模：<strong style="color:var(--green)">无上限</strong></p>
+        <p>月收入（200家）：<strong style="color:var(--green)">$780</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.78rem;font-family:var(--mono)">
+  OPC Platform · RegWatch Scenario · Powered by CauchyX AI
+</footer>
+
+</body>
+</html>
