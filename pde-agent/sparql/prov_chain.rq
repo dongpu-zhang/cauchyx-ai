@@ -1,0 +1,31 @@
+# prov_chain.rq
+# 查询指定任务 ID 的完整计算溯源链（按时间顺序）
+# 用于生成 DO-178C / ISO 26262 / FDA 审计报告
+
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX pde:  <http://cauchyx.ai/pde#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?activity ?agentLabel ?startTime ?endTime
+       ?inputLabel ?outputLabel ?durationSec
+WHERE {
+    ?activity rdf:type prov:Activity ;
+              prov:wasAssociatedWith ?agent ;
+              prov:startedAtTime ?startTime ;
+              prov:endedAtTime   ?endTime ;
+              prov:used          ?input ;
+              prov:generated     ?output .
+
+    OPTIONAL { ?agent  prov:label ?agentLabel }
+    OPTIONAL { ?input  prov:label ?inputLabel }
+    OPTIONAL { ?output prov:label ?outputLabel }
+
+    # 计算耗时（秒）
+    BIND(
+        (xsd:decimal(STR(?endTime)) - xsd:decimal(STR(?startTime))) AS ?durationSec
+    )
+
+    # 过滤指定会话（由调用方通过 SPARQL binding 注入 ?sessionId）
+    FILTER(CONTAINS(STR(?activity), ?sessionId))
+}
+ORDER BY ?startTime

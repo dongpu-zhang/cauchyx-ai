@@ -1,0 +1,25 @@
+# unit_check.rq
+# 检查 PDE 问题中所有参数的单位是否与量种一致
+# 返回：参数节点 + 错误信息（结果非空 = 存在单位幻觉）
+
+PREFIX pde:  <http://cauchyx.ai/pde#>
+PREFIX qudt: <http://qudt.org/schema/qudt/>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?problem ?param ?declaredKind ?actualKind ?unit ?unitLabel
+WHERE {
+    ?problem rdf:type pde:PDEProblem ;
+             pde:hasParameter ?param .
+
+    ?param qudt:hasQuantityKind ?declaredKind ;
+           qudt:unit ?unit .
+
+    # 获取单位实际对应的量种
+    ?unit qudt:hasQuantityKind ?actualKind .
+
+    # 量种不匹配 → 单位幻觉
+    FILTER(?declaredKind != ?actualKind)
+
+    OPTIONAL { ?unit rdfs:label ?unitLabel }
+}

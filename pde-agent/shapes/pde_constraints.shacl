@@ -1,0 +1,162 @@
+# pde_constraints.shacl
+# SHACL 形状约束：参数范围验证（物理合理性检查）
+# 引擎：pyshacl  用法：pyshacl -s pde_constraints.shacl -d problem.ttl
+
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix pde:  <http://cauchyx.ai/pde#> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+@prefix qkdv: <http://qudt.org/vocab/quantitykind/> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# ── 形状 1：PDEProblem 必须有方程类型和边界条件
+pde:PDEProblemShape
+    rdf:type sh:NodeShape ;
+    sh:targetClass pde:PDEProblem ;
+
+    sh:property [
+        sh:path pde:governedBy ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "PDEProblem must have exactly one governedBy equation." ;
+    ] ;
+    sh:property [
+        sh:path pde:hasBoundaryCondition ;
+        sh:minCount 1 ;
+        sh:message "PDEProblem must have at least one boundary condition." ;
+    ] ;
+    sh:property [
+        sh:path pde:hasSpatialDomain ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "PDEProblem must specify exactly one spatial domain." ;
+    ] ;
+    sh:property [
+        sh:path pde:hasTemporalType ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "PDEProblem must specify exactly one temporal type (Steady/Transient)." ;
+    ] ;
+    sh:property [
+        sh:path pde:spaceDimension ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 1000 ;
+        sh:message "spaceDimension must be an integer between 1 and 1000." ;
+    ] .
+
+# ── 形状 2：物理参数量值必须有单位
+pde:QuantityShape
+    rdf:type sh:NodeShape ;
+    sh:targetClass qudt:Quantity ;
+
+    sh:property [
+        sh:path qudt:numericValue ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:double ;
+        sh:message "Quantity must have exactly one numeric value." ;
+    ] ;
+    sh:property [
+        sh:path qudt:unit ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:message "Quantity must have exactly one unit." ;
+    ] ;
+    sh:property [
+        sh:path qudt:hasQuantityKind ;
+        sh:minCount 1 ;
+        sh:message "Quantity must declare its quantity kind." ;
+    ] .
+
+# ── 形状 3：温度参数范围（物理合理性）
+pde:TemperatureQuantityShape
+    rdf:type sh:NodeShape ;
+    sh:target [
+        rdf:type sh:SPARQLTarget ;
+        sh:select """
+            PREFIX qudt: <http://qudt.org/schema/qudt/>
+            PREFIX qkdv: <http://qudt.org/vocab/quantitykind/>
+            SELECT ?this WHERE {
+                ?this qudt:hasQuantityKind qkdv:Temperature .
+            }
+        """ ;
+    ] ;
+    sh:property [
+        sh:path qudt:numericValue ;
+        sh:minInclusive 0.0 ;       # 0 K (绝对零度)
+        sh:maxInclusive 1.0e8 ;     # 理论上限（太阳核心温度量级）
+        sh:message "Temperature value must be in Kelvin and physically plausible (0 to 1e8 K)." ;
+    ] .
+
+# ── 形状 4：热导率范围（防止 k=10000 W/(m·K) 幻觉）
+pde:ThermalConductivityShape
+    rdf:type sh:NodeShape ;
+    sh:target [
+        rdf:type sh:SPARQLTarget ;
+        sh:select """
+            PREFIX qudt: <http://qudt.org/schema/qudt/>
+            PREFIX qkdv: <http://qudt.org/vocab/quantitykind/>
+            SELECT ?this WHERE {
+                ?this qudt:hasQuantityKind qkdv:ThermalConductivity .
+            }
+        """ ;
+    ] ;
+    sh:property [
+        sh:path qudt:numericValue ;
+        sh:minInclusive 1.0e-3 ;  # 最低：气体（氢气 ~0.18）
+        sh:maxInclusive 2500.0 ;  # 最高：钻石 (~2000)
+        sh:message "Thermal conductivity must be in W/(m·K) and between 0.001 and 2500." ;
+    ] .
+
+# ── 形状 5：热扩散系数范围
+pde:ThermalDiffusivityShape
+    rdf:type sh:NodeShape ;
+    sh:target [
+        rdf:type sh:SPARQLTarget ;
+        sh:select """
+            PREFIX qudt: <http://qudt.org/schema/qudt/>
+            PREFIX qkdv: <http://qudt.org/vocab/quantitykind/>
+            SELECT ?this WHERE {
+                ?this qudt:hasQuantityKind qkdv:ThermalDiffusivity .
+            }
+        """ ;
+    ] ;
+    sh:property [
+        sh:path qudt:numericValue ;
+        sh:minInclusive 1.0e-9 ;   # 最低：绝热材料
+        sh:maxInclusive 1.0e-3 ;   # 最高：金属（银 ~1.7e-4）
+        sh:message "Thermal diffusivity must be in m²/s and between 1e-9 and 1e-3." ;
+    ] .
+
+# ── 形状 6：粘度范围
+pde:ViscosityShape
+    rdf:type sh:NodeShape ;
+    sh:target [
+        rdf:type sh:SPARQLTarget ;
+        sh:select """
+            PREFIX qudt: <http://qudt.org/schema/qudt/>
+            PREFIX qkdv: <http://qudt.org/vocab/quantitykind/>
+            SELECT ?this WHERE {
+                ?this qudt:hasQuantityKind qkdv:DynamicViscosity .
+            }
+        """ ;
+    ] ;
+    sh:property [
+        sh:path qudt:numericValue ;
+        sh:minInclusive 1.0e-6 ;  # 最低：气体（空气 ~1.8e-5 Pa·s）
+        sh:maxInclusive 1.0e6 ;   # 最高：重油/沥青
+        sh:message "Dynamic viscosity must be in Pa·s and between 1e-6 and 1e6." ;
+    ] .
+
+# ── 形状 7：XNet 求解器不能用于 HighDimensional + FDM 组合（已在查询层检查，SHACL 双保险）
+pde:SolverDimensionShape
+    rdf:type sh:NodeShape ;
+    sh:targetClass pde:PDEProblem ;
+    sh:sparql [
+        sh:message "FDM/FEM solver cannot be used for high-dimensional problems (dim > 3)." ;
+        sh:select """
+            PREFIX pde: <http://cauchyx.ai/pde#>
+            SELECT $this WHERE {
+                $this pde:spaceDimension ?dim ;
+                      pde:solvedBy ?solver .
+                ?solver pde:maxDimension ?maxDim .
+                FILTER(?dim > ?maxDim)
+            }
+        """ ;
+    ] .

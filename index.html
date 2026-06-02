@@ -442,6 +442,47 @@
   .status-acq  { background: rgba(212,160,23,0.15);  color: var(--gold); }
   .status-seed { background: rgba(0,204,238,0.15);   color: var(--cyan); }
 
+  /* ─── ONTOLOGY ────────────────────────────────────────── */
+  #ontology { max-width: 900px; margin: 0 auto; }
+  .onto-svg-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 2rem;
+    border: 1px solid rgba(0,204,238,0.18);
+    border-radius: 10px;
+    background: rgba(0,0,0,0.35);
+    padding: 1.25rem;
+  }
+  .onto-svg-wrap svg { display: block; max-width: 100%; height: auto; }
+  .onto-caption {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 0.9rem;
+    letter-spacing: 0.04em;
+  }
+  .onto-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 1.5rem;
+    justify-content: center;
+  }
+  .onto-pill {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 20px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .onto-pill.q  { color: #a78bfa; border-color: rgba(139,92,246,0.4); }
+  .onto-pill.p  { color: var(--gold); border-color: rgba(212,160,23,0.4); }
+  .onto-pill.o  { color: var(--cyan); border-color: rgba(0,204,238,0.4); }
+  .onto-pill.s  { color: #4ade80; border-color: rgba(74,222,128,0.4); }
+
   /* ─── MARKET ──────────────────────────────────────────── */
   .market-grid {
     display: grid;
@@ -1363,6 +1404,7 @@
     <li><a href="#papers">Papers</a></li>
     <li><a href="#founders">Founders</a></li>
     <li><a href="#compare">Compare</a></li>
+    <li><a href="#ontology">Ontology</a></li>
     <li><a href="#market">Market</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#demo" class="nav-demo-link">Demo</a></li>
@@ -2034,6 +2076,202 @@
       <span class="metric-val" style="color:var(--gold)">O(N<sup style="font-size:1.2rem">−r</sup>)</span>
       <span class="metric-label">convergence rate any r &gt; 0<br>Theorem 3.2, NeurIPS 2025</span>
     </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ── ONTOLOGY ───────────────────────────────────────────── -->
+<section id="ontology">
+  <p class="section-label reveal">Architecture — Ontology</p>
+  <h2 class="reveal">PDE Ontology: Hallucination Control Layer</h2>
+  <p class="reveal" style="color:var(--muted);max-width:720px;margin:0 auto 0.5rem;">
+    Every natural-language PDE problem is validated against a formal OWL-DL ontology before any
+    computation begins. Mutually-exclusive class axioms catch equation misclassification;
+    QUDT unit rules block physically impossible parameters; PROV-O records a full audit trail
+    for DO-178C / ISO 26262 compliance.
+  </p>
+
+  <div class="onto-svg-wrap reveal">
+    <svg viewBox="0 0 860 500" xmlns="http://www.w3.org/2000/svg"
+         font-family="'JetBrains Mono', 'Fira Mono', monospace" font-size="11">
+
+      <!-- ── defs ── -->
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#00ccee" opacity="0.7"/>
+        </marker>
+        <marker id="arr-d" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa" opacity="0.7"/>
+        </marker>
+        <marker id="arr-g" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#4ade80" opacity="0.7"/>
+        </marker>
+      </defs>
+
+      <!-- ════ QUDT badge ════ -->
+      <rect x="10" y="10" width="108" height="36" rx="5"
+            fill="rgba(139,92,246,0.12)" stroke="#7c3aed" stroke-width="1.2"/>
+      <text x="64" y="24" text-anchor="middle" fill="#a78bfa" font-size="9" font-weight="700" letter-spacing="1">QUDT</text>
+      <text x="64" y="38" text-anchor="middle" fill="#a78bfa" font-size="8.5">Unit Validation</text>
+
+      <!-- ════ PROV-O badge ════ -->
+      <rect x="742" y="10" width="108" height="36" rx="5"
+            fill="rgba(212,160,23,0.12)" stroke="#b8860b" stroke-width="1.2"/>
+      <text x="796" y="24" text-anchor="middle" fill="#d4a017" font-size="9" font-weight="700" letter-spacing="1">PROV-O</text>
+      <text x="796" y="38" text-anchor="middle" fill="#d4a017" font-size="8.5">Audit Trail</text>
+
+      <!-- ════ PDEProblem — central node ════ -->
+      <rect x="305" y="16" width="250" height="52" rx="7"
+            fill="rgba(0,204,238,0.08)" stroke="#00ccee" stroke-width="2"/>
+      <text x="430" y="37" text-anchor="middle" fill="#00ccee" font-size="13" font-weight="700">PDEProblem</text>
+      <text x="430" y="54" text-anchor="middle" fill="#88dde8" font-size="9">OWL class · ABox instances validated</text>
+
+      <!-- ════ EquationType cluster — LEFT ════ -->
+      <!-- cluster border -->
+      <rect x="20" y="90" width="220" height="270" rx="8"
+            fill="none" stroke="rgba(0,204,238,0.25)" stroke-width="1.2" stroke-dasharray="5,3"/>
+      <text x="130" y="107" text-anchor="middle" fill="#88dde8" font-size="9.5" font-weight="600" letter-spacing="0.5">EquationType  (AllDisjoint)</text>
+
+      <!-- Elliptic -->
+      <rect x="30" y="115" width="200" height="30" rx="5"
+            fill="rgba(0,204,238,0.06)" stroke="rgba(0,204,238,0.35)" stroke-width="1"/>
+      <text x="130" y="132" text-anchor="middle" fill="#b2eaf0" font-size="10.5">EllipticPDE</text>
+      <!-- leaf -->
+      <text x="55" y="158" fill="#5ea8b8" font-size="9">⊂ PoissonEquation</text>
+      <text x="55" y="172" fill="#5ea8b8" font-size="9">⊂ LaplaceEquation</text>
+
+      <!-- Parabolic -->
+      <rect x="30" y="182" width="200" height="30" rx="5"
+            fill="rgba(0,204,238,0.06)" stroke="rgba(0,204,238,0.35)" stroke-width="1"/>
+      <text x="130" y="200" text-anchor="middle" fill="#b2eaf0" font-size="10.5">ParabolicPDE</text>
+      <text x="55" y="224" fill="#5ea8b8" font-size="9">⊂ HeatEquation</text>
+      <text x="55" y="238" fill="#5ea8b8" font-size="9">⊂ AllenCahnEquation</text>
+
+      <!-- Hyperbolic -->
+      <rect x="30" y="248" width="200" height="30" rx="5"
+            fill="rgba(0,204,238,0.06)" stroke="rgba(0,204,238,0.35)" stroke-width="1"/>
+      <text x="130" y="266" text-anchor="middle" fill="#b2eaf0" font-size="10.5">HyperbolicPDE</text>
+      <text x="55" y="289" fill="#5ea8b8" font-size="9">⊂ WaveEquation</text>
+
+      <!-- Nonlinear -->
+      <rect x="30" y="306" width="200" height="30" rx="5"
+            fill="rgba(0,204,238,0.06)" stroke="rgba(0,204,238,0.35)" stroke-width="1"/>
+      <text x="130" y="322" text-anchor="middle" fill="#b2eaf0" font-size="10.5">NonlinearPDE</text>
+      <text x="55" y="345" fill="#5ea8b8" font-size="9">⊂ BurgersEquation</text>
+      <text x="55" y="359" fill="#5ea8b8" font-size="9">⊂ AdvectionEquation</text>
+
+      <!-- ════ BoundaryCondition cluster — RIGHT TOP ════ -->
+      <rect x="620" y="90" width="220" height="140" rx="8"
+            fill="none" stroke="rgba(212,160,23,0.3)" stroke-width="1.2" stroke-dasharray="5,3"/>
+      <text x="730" y="107" text-anchor="middle" fill="#d4a017" font-size="9.5" font-weight="600" letter-spacing="0.5">BoundaryCondition  (AllDisjoint)</text>
+
+      <rect x="630" y="114" width="95" height="28" rx="4"
+            fill="rgba(212,160,23,0.07)" stroke="rgba(212,160,23,0.35)" stroke-width="1"/>
+      <text x="677" y="132" text-anchor="middle" fill="#e8c060" font-size="9.5">DirichletBC</text>
+
+      <rect x="735" y="114" width="95" height="28" rx="4"
+            fill="rgba(212,160,23,0.07)" stroke="rgba(212,160,23,0.35)" stroke-width="1"/>
+      <text x="782" y="132" text-anchor="middle" fill="#e8c060" font-size="9.5">NeumannBC</text>
+
+      <rect x="630" y="152" width="95" height="28" rx="4"
+            fill="rgba(212,160,23,0.07)" stroke="rgba(212,160,23,0.35)" stroke-width="1"/>
+      <text x="677" y="170" text-anchor="middle" fill="#e8c060" font-size="9.5">RobinBC</text>
+
+      <rect x="735" y="152" width="95" height="28" rx="4"
+            fill="rgba(212,160,23,0.07)" stroke="rgba(212,160,23,0.35)" stroke-width="1"/>
+      <text x="782" y="170" text-anchor="middle" fill="#e8c060" font-size="9.5">PeriodicBC</text>
+
+      <text x="730" y="214" text-anchor="middle" fill="#a07820" font-size="8.5">Functional: each problem has exactly one BC</text>
+
+      <!-- ════ SolverMethod cluster — RIGHT BOTTOM ════ -->
+      <rect x="620" y="250" width="220" height="130" rx="8"
+            fill="none" stroke="rgba(74,222,128,0.25)" stroke-width="1.2" stroke-dasharray="5,3"/>
+      <text x="730" y="267" text-anchor="middle" fill="#4ade80" font-size="9.5" font-weight="600" letter-spacing="0.5">SolverMethod  (AllDisjoint)</text>
+
+      <!-- XNet highlighted -->
+      <rect x="630" y="274" width="200" height="32" rx="5"
+            fill="rgba(0,204,238,0.12)" stroke="#00ccee" stroke-width="1.8"/>
+      <text x="730" y="290" text-anchor="middle" fill="#00ccee" font-size="10.5" font-weight="700">XNetSolver_v1</text>
+      <text x="730" y="302" text-anchor="middle" fill="#4faab8" font-size="8">default · handles all types</text>
+
+      <rect x="630" y="314" width="90" height="28" rx="4"
+            fill="rgba(74,222,128,0.06)" stroke="rgba(74,222,128,0.3)" stroke-width="1"/>
+      <text x="675" y="332" text-anchor="middle" fill="#86efac" font-size="9.5">FDMSolver_v1</text>
+
+      <rect x="730" y="314" width="100" height="28" rx="4"
+            fill="rgba(74,222,128,0.06)" stroke="rgba(74,222,128,0.3)" stroke-width="1"/>
+      <text x="780" y="332" text-anchor="middle" fill="#86efac" font-size="9.5">FEMSolver_v1</text>
+
+      <!-- ════ NumericalProperty cluster — BOTTOM CENTER ════ -->
+      <rect x="270" y="370" width="320" height="110" rx="8"
+            fill="none" stroke="rgba(139,92,246,0.3)" stroke-width="1.2" stroke-dasharray="5,3"/>
+      <text x="430" y="387" text-anchor="middle" fill="#a78bfa" font-size="9.5" font-weight="600" letter-spacing="0.5">NumericalProperty</text>
+      <text x="310" y="408" fill="#8b7bc0" font-size="9">● RegularProblem</text>
+      <text x="310" y="424" fill="#8b7bc0" font-size="9">● StiffProblem</text>
+      <text x="310" y="440" fill="#8b7bc0" font-size="9">● SingularityPresent</text>
+      <text x="440" y="408" fill="#8b7bc0" font-size="9">● HighDimensional</text>
+      <text x="440" y="424" fill="#8b7bc0" font-size="9">● ConvectionDominated</text>
+      <text x="430" y="470" text-anchor="middle" fill="#6b5fa0" font-size="8">SHACL constraints validate physical parameter ranges</text>
+
+      <!-- ════ Arrows ════ -->
+
+      <!-- PDEProblem → EquationType  (governedBy, Functional) -->
+      <line x1="305" y1="42" x2="244" y2="130"
+            stroke="#00ccee" stroke-width="1.3" opacity="0.6" marker-end="url(#arr)"/>
+      <text x="245" y="82" fill="#00ccee" font-size="8.5" transform="rotate(-35,245,82)">governedBy</text>
+
+      <!-- PDEProblem → BoundaryCondition  (hasBoundaryCondition, Functional) -->
+      <line x1="555" y1="42" x2="616" y2="130"
+            stroke="#d4a017" stroke-width="1.3" opacity="0.6" marker-end="url(#arr-d)"/>
+      <text x="568" y="80" fill="#d4a017" font-size="8.5" transform="rotate(35,568,80)">hasBoundaryCondition</text>
+
+      <!-- PDEProblem → SolverMethod  (solvedBy, inferred dashed) -->
+      <line x1="555" y1="55" x2="616" y2="270"
+            stroke="#4ade80" stroke-width="1.3" opacity="0.55"
+            stroke-dasharray="5,3" marker-end="url(#arr-g)"/>
+      <text x="610" y="185" fill="#4ade80" font-size="8.5" text-anchor="end">solvedBy</text>
+      <text x="610" y="196" fill="#4ade80" font-size="7.5" text-anchor="end">(inferred)</text>
+
+      <!-- PDEProblem → NumericalProperty  -->
+      <line x1="430" y1="68" x2="430" y2="366"
+            stroke="#a78bfa" stroke-width="1.3" opacity="0.55" marker-end="url(#arr-d)"/>
+      <text x="436" y="240" fill="#a78bfa" font-size="8.5">hasNumericalProperty</text>
+
+      <!-- QUDT → PDEProblem  -->
+      <line x1="118" y1="28" x2="303" y2="30"
+            stroke="#7c3aed" stroke-width="1" opacity="0.5" stroke-dasharray="4,3" marker-end="url(#arr-d)"/>
+      <text x="190" y="22" fill="#7c3aed" font-size="8" text-anchor="middle">hasParameter</text>
+
+      <!-- PROV-O → PDEProblem  -->
+      <line x1="742" y1="28" x2="557" y2="30"
+            stroke="#b8860b" stroke-width="1" opacity="0.5" stroke-dasharray="4,3" marker-end="url(#arr-d)"/>
+      <text x="670" y="22" fill="#b8860b" font-size="8" text-anchor="middle">wasGeneratedBy</text>
+
+      <!-- ════ Legend ════ -->
+      <line x1="30" y1="488" x2="60" y2="488" stroke="#00ccee" stroke-width="1.3" opacity="0.7" marker-end="url(#arr)"/>
+      <text x="66" y="492" fill="#88dde8" font-size="8.5">object property (Functional)</text>
+      <line x1="240" y1="488" x2="270" y2="488" stroke="#a78bfa" stroke-width="1.3" stroke-dasharray="4,3" opacity="0.7" marker-end="url(#arr-d)"/>
+      <text x="276" y="492" fill="#a78bfa" font-size="8.5">inferred / SHACL</text>
+      <rect x="450" y="481" width="10" height="10" rx="2" fill="none" stroke="#00ccee" stroke-width="1.8"/>
+      <text x="466" y="492" fill="#88dde8" font-size="8.5">default solver</text>
+      <rect x="570" y="481" width="10" height="10" rx="2" fill="none" stroke="rgba(0,204,238,0.3)" stroke-width="1"/>
+      <text x="586" y="492" fill="#88dde8" font-size="8.5">AllDisjoint class group</text>
+    </svg>
+  </div>
+
+  <p class="onto-caption reveal">
+    OWL-DL TBox · 26 classes · 7 object properties · QUDT unit normalization · PROV-O audit
+  </p>
+
+  <div class="onto-pills reveal">
+    <span class="onto-pill q">QUDT Unit Validation</span>
+    <span class="onto-pill q">AllDisjointClasses anti-hallucination</span>
+    <span class="onto-pill p">PROV-O Audit Trail</span>
+    <span class="onto-pill p">DO-178C / ISO 26262</span>
+    <span class="onto-pill o">rdflib + pyshacl</span>
+    <span class="onto-pill o">SPARQL hallucination_check</span>
+    <span class="onto-pill s">8/8 integration tests passing</span>
   </div>
 </section>
 

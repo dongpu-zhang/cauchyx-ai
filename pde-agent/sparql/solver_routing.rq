@@ -1,0 +1,45 @@
+# solver_routing.rq
+# 给定 PDE 问题的数值特性，查询最优求解器
+# 返回：求解器 URI + 优先级分数
+
+PREFIX pde:  <http://cauchyx.ai/pde#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?solver (SUM(?score) AS ?totalScore)
+WHERE {
+    # 候选求解器必须与所有数值特性兼容
+    ?solver rdf:type ?solverClass .
+    ?solverClass rdfs:subClassOf* pde:SolverMethod .
+
+    # 对问题的每个数值特性检查兼容性
+    {
+        # 特性存在且求解器兼容 → 加分
+        ?problem pde:hasNumericalProperty ?prop .
+        ?solver  pde:isSolverCompatibleWith ?prop .
+        BIND(3 AS ?score)
+    }
+    UNION
+    {
+        # 求解器没有 notCompatibleWith 任何该问题的特性 → 加基础分
+        FILTER NOT EXISTS {
+            ?problem pde:hasNumericalProperty ?blockProp .
+            ?solver  pde:notCompatibleWith ?blockProp .
+        }
+        BIND(1 AS ?score)
+    }
+    UNION
+    {
+        # XNet 额外优先加分（最高精度）
+        FILTER(?solver = pde:XNetSolver_v1)
+        BIND(2 AS ?score)
+    }
+
+    # 强制排除：求解器与某特性不兼容则完全排除
+    FILTER NOT EXISTS {
+        ?problem pde:hasNumericalProperty ?blockProp .
+        ?solver  pde:notCompatibleWith ?blockProp .
+    }
+}
+GROUP BY ?solver
+ORDER BY DESC(?totalScore)
+LIMIT 1

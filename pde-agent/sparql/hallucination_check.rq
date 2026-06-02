@@ -1,0 +1,61 @@
+# hallucination_check.rq
+# 综合幻觉检测：返回所有违规的 (problem, violation_type, detail)
+# 结果非空 = 存在幻觉，需拒绝执行
+
+PREFIX pde:  <http://cauchyx.ai/pde#>
+PREFIX qudt: <http://qudt.org/schema/qudt/>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?problem ?violationType ?detail
+WHERE {
+    ?problem rdf:type pde:PDEProblem .
+
+    {
+        # 违规 1：求解器与数值特性不兼容（维度灾难、奇点等）
+        ?problem pde:hasNumericalProperty ?prop ;
+                 pde:solvedBy ?solver .
+        ?solver  pde:notCompatibleWith ?prop .
+        BIND("SOLVER_INCOMPATIBLE" AS ?violationType)
+        BIND(CONCAT("Solver ", STR(?solver), " cannot handle ", STR(?prop)) AS ?detail)
+    }
+    UNION
+    {
+        # 违规 2：方程类型与求解器维度不匹配
+        ?problem pde:spaceDimension ?dim ;
+                 pde:solvedBy ?solver .
+        ?solver  pde:maxDimension ?maxDim .
+        FILTER(?dim > ?maxDim)
+        BIND("DIMENSION_EXCEEDED" AS ?violationType)
+        BIND(CONCAT("dim=", STR(?dim), " exceeds solver max=", STR(?maxDim)) AS ?detail)
+    }
+    UNION
+    {
+        # 违规 3：SteadyState 问题不应有时间终点 > 0
+        ?problem pde:hasTemporalType pde:SteadyState ;
+                 pde:timeEnd ?t .
+        FILTER(?t > 0)
+        BIND("TEMPORAL_CONFLICT" AS ?violationType)
+        BIND("SteadyState problem cannot have timeEnd > 0" AS ?detail)
+    }
+    UNION
+    {
+        # 违规 4：单位量种不匹配
+        ?problem pde:hasParameter ?param .
+        ?param qudt:hasQuantityKind ?declaredKind ;
+               qudt:unit ?unit .
+        ?unit  qudt:hasQuantityKind ?actualKind .
+        FILTER(?declaredKind != ?actualKind)
+        BIND("UNIT_KIND_MISMATCH" AS ?violationType)
+        BIND(CONCAT("Declared ", STR(?declaredKind), " but unit implies ", STR(?actualKind)) AS ?detail)
+    }
+    UNION
+    {
+        # 违规 5：方程类型不存在于 TBox（LLM 捏造新方程）
+        ?problem pde:governedBy ?eqType .
+        FILTER NOT EXISTS { ?eqType rdfs:subClassOf* pde:EquationType }
+        BIND("UNKNOWN_EQUATION_TYPE" AS ?violationType)
+        BIND(CONCAT("Unknown equation type: ", STR(?eqType)) AS ?detail)
+    }
+}

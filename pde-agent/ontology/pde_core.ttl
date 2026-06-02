@@ -1,0 +1,311 @@
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix pde:   <http://cauchyx.ai/pde#> .
+@prefix qudt:  <http://qudt.org/schema/qudt/> .
+@prefix unit:  <http://qudt.org/vocab/unit/> .
+@prefix qkdv:  <http://qudt.org/vocab/quantitykind/> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+
+# ═══════════════════════════════════════════════════════
+# PDE Agent Core Ontology  v0.2.0
+# Inline QUDT subset + PROV-O subset (no external download needed)
+# ═══════════════════════════════════════════════════════
+
+<http://cauchyx.ai/pde-ontology>
+    rdf:type owl:Ontology ;
+    owl:versionInfo "0.2.0" ;
+    rdfs:label "CauchyX PDE Agent Core Ontology" ;
+    rdfs:comment "Minimum viable ontology for PDE Agent hallucination control." .
+
+# ───────────────────────────────────────────────────────
+# SECTION 1 — QUDT SUBSET (单位与量种)
+# ───────────────────────────────────────────────────────
+
+qudt:Quantity       rdf:type owl:Class .
+qudt:Unit           rdf:type owl:Class .
+qudt:QuantityKind   rdf:type owl:Class .
+qudt:numericValue   rdf:type owl:DatatypeProperty ; rdfs:domain qudt:Quantity ; rdfs:range xsd:double .
+qudt:unit           rdf:type owl:ObjectProperty   ; rdfs:domain qudt:Quantity ; rdfs:range qudt:Unit .
+qudt:hasQuantityKind rdf:type owl:ObjectProperty  ; rdfs:domain qudt:Quantity ; rdfs:range qudt:QuantityKind .
+
+# 量种 QuantityKinds
+qkdv:Temperature          rdf:type qudt:QuantityKind ; rdfs:label "Temperature" .
+qkdv:ThermalConductivity  rdf:type qudt:QuantityKind ; rdfs:label "ThermalConductivity" .
+qkdv:ThermalDiffusivity   rdf:type qudt:QuantityKind ; rdfs:label "ThermalDiffusivity" .
+qkdv:DynamicViscosity     rdf:type qudt:QuantityKind ; rdfs:label "DynamicViscosity" .
+qkdv:Pressure             rdf:type qudt:QuantityKind ; rdfs:label "Pressure" .
+qkdv:Speed                rdf:type qudt:QuantityKind ; rdfs:label "Speed" .
+qkdv:Density              rdf:type qudt:QuantityKind ; rdfs:label "Density" .
+qkdv:SpecificHeatCapacity rdf:type qudt:QuantityKind ; rdfs:label "SpecificHeatCapacity" .
+qkdv:Diffusivity          rdf:type qudt:QuantityKind ; rdfs:label "Diffusivity" .
+
+# 单位 Units (SI + common)
+unit:K          rdf:type qudt:Unit ; rdfs:label "Kelvin" ;
+    qudt:hasQuantityKind qkdv:Temperature ; qudt:conversionMultiplier "1.0"^^xsd:double .
+unit:DEGC       rdf:type qudt:Unit ; rdfs:label "DegreeCelsius" ;
+    qudt:hasQuantityKind qkdv:Temperature ; qudt:conversionOffset "273.15"^^xsd:double .
+unit:PA         rdf:type qudt:Unit ; rdfs:label "Pascal" ;
+    qudt:hasQuantityKind qkdv:Pressure ; qudt:conversionMultiplier "1.0"^^xsd:double .
+unit:KPA        rdf:type qudt:Unit ; rdfs:label "Kilopascal" ;
+    qudt:hasQuantityKind qkdv:Pressure ; qudt:conversionMultiplier "1.0e3"^^xsd:double .
+unit:MPA        rdf:type qudt:Unit ; rdfs:label "Megapascal" ;
+    qudt:hasQuantityKind qkdv:Pressure ; qudt:conversionMultiplier "1.0e6"^^xsd:double .
+unit:W-PER-M-K  rdf:type qudt:Unit ; rdfs:label "WattPerMeterKelvin" ;
+    qudt:hasQuantityKind qkdv:ThermalConductivity ; qudt:conversionMultiplier "1.0"^^xsd:double .
+unit:M2-PER-SEC rdf:type qudt:Unit ; rdfs:label "SquareMeterPerSecond" ;
+    qudt:hasQuantityKind qkdv:ThermalDiffusivity ; qudt:conversionMultiplier "1.0"^^xsd:double .
+unit:CM2-PER-SEC rdf:type qudt:Unit ; rdfs:label "SquareCentimeterPerSecond" ;
+    qudt:hasQuantityKind qkdv:ThermalDiffusivity ; qudt:conversionMultiplier "1.0e-4"^^xsd:double .
+unit:M-PER-SEC  rdf:type qudt:Unit ; rdfs:label "MeterPerSecond" ;
+    qudt:hasQuantityKind qkdv:Speed ; qudt:conversionMultiplier "1.0"^^xsd:double .
+unit:KG-PER-M3  rdf:type qudt:Unit ; rdfs:label "KilogramPerCubicMeter" ;
+    qudt:hasQuantityKind qkdv:Density ; qudt:conversionMultiplier "1.0"^^xsd:double .
+unit:J-PER-KG-K rdf:type qudt:Unit ; rdfs:label "JoulePerKilogramKelvin" ;
+    qudt:hasQuantityKind qkdv:SpecificHeatCapacity ; qudt:conversionMultiplier "1.0"^^xsd:double .
+unit:PA-SEC     rdf:type qudt:Unit ; rdfs:label "PascalSecond" ;
+    qudt:hasQuantityKind qkdv:DynamicViscosity ; qudt:conversionMultiplier "1.0"^^xsd:double .
+unit:CP         rdf:type qudt:Unit ; rdfs:label "Centipoise" ;
+    qudt:hasQuantityKind qkdv:DynamicViscosity ; qudt:conversionMultiplier "1.0e-3"^^xsd:double .
+
+# ───────────────────────────────────────────────────────
+# SECTION 2 — PROV-O SUBSET (溯源)
+# ───────────────────────────────────────────────────────
+
+prov:Entity            rdf:type owl:Class .
+prov:Activity          rdf:type owl:Class .
+prov:Agent             rdf:type owl:Class .
+prov:SoftwareAgent     rdf:type owl:Class ; rdfs:subClassOf prov:Agent .
+
+prov:wasGeneratedBy    rdf:type owl:ObjectProperty ; rdfs:domain prov:Entity   ; rdfs:range prov:Activity .
+prov:used              rdf:type owl:ObjectProperty ; rdfs:domain prov:Activity  ; rdfs:range prov:Entity .
+prov:wasAttributedTo   rdf:type owl:ObjectProperty ; rdfs:domain prov:Entity   ; rdfs:range prov:Agent .
+prov:wasDerivedFrom    rdf:type owl:ObjectProperty ; rdfs:domain prov:Entity   ; rdfs:range prov:Entity .
+prov:wasAssociatedWith rdf:type owl:ObjectProperty ; rdfs:domain prov:Activity ; rdfs:range prov:Agent .
+prov:generated         rdf:type owl:ObjectProperty ; rdfs:domain prov:Activity ; rdfs:range prov:Entity .
+prov:startedAtTime     rdf:type owl:DatatypeProperty ; rdfs:domain prov:Activity ; rdfs:range xsd:dateTime .
+prov:endedAtTime       rdf:type owl:DatatypeProperty ; rdfs:domain prov:Activity ; rdfs:range xsd:dateTime .
+prov:label             rdf:type owl:DatatypeProperty ; rdfs:range xsd:string .
+
+# ───────────────────────────────────────────────────────
+# SECTION 3 — PDE CORE TBOX (方程、边界条件、求解器)
+# ───────────────────────────────────────────────────────
+
+# ── 顶层类
+pde:PDEProblem        rdf:type owl:Class .
+pde:EquationType      rdf:type owl:Class .
+pde:BoundaryCondition rdf:type owl:Class .
+pde:SpatialDomain     rdf:type owl:Class .
+pde:TemporalType      rdf:type owl:Class .
+pde:SolverMethod      rdf:type owl:Class .
+pde:NumericalProperty rdf:type owl:Class .
+pde:PhysicsField      rdf:type owl:Class .
+pde:OutputQuantity    rdf:type owl:Class .
+
+# ── 方程类型层次
+pde:EllipticPDE        rdf:type owl:Class ; rdfs:subClassOf pde:EquationType .
+pde:ParabolicPDE       rdf:type owl:Class ; rdfs:subClassOf pde:EquationType .
+pde:HyperbolicPDE      rdf:type owl:Class ; rdfs:subClassOf pde:EquationType .
+pde:NonlinearPDE       rdf:type owl:Class ; rdfs:subClassOf pde:EquationType .
+pde:PoissonEquation    rdf:type owl:Class ; rdfs:subClassOf pde:EllipticPDE .
+pde:LaplaceEquation    rdf:type owl:Class ; rdfs:subClassOf pde:PoissonEquation .
+pde:HeatEquation       rdf:type owl:Class ; rdfs:subClassOf pde:ParabolicPDE .
+pde:AllenCahnEquation  rdf:type owl:Class ; rdfs:subClassOf pde:ParabolicPDE .
+pde:WaveEquation       rdf:type owl:Class ; rdfs:subClassOf pde:HyperbolicPDE .
+pde:AdvectionEquation  rdf:type owl:Class ; rdfs:subClassOf pde:HyperbolicPDE .
+pde:BurgersEquation    rdf:type owl:Class ; rdfs:subClassOf pde:NonlinearPDE .
+
+# ── 边界条件类型（互斥）
+pde:DirichletBC  rdf:type owl:Class ; rdfs:subClassOf pde:BoundaryCondition .
+pde:NeumannBC    rdf:type owl:Class ; rdfs:subClassOf pde:BoundaryCondition .
+pde:RobinBC      rdf:type owl:Class ; rdfs:subClassOf pde:BoundaryCondition .
+pde:PeriodicBC   rdf:type owl:Class ; rdfs:subClassOf pde:BoundaryCondition .
+
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( pde:DirichletBC pde:NeumannBC pde:RobinBC pde:PeriodicBC ) ] .
+
+# ── 空间域
+pde:Domain1D  rdf:type owl:Class ; rdfs:subClassOf pde:SpatialDomain .
+pde:Domain2D  rdf:type owl:Class ; rdfs:subClassOf pde:SpatialDomain .
+pde:Domain3D  rdf:type owl:Class ; rdfs:subClassOf pde:SpatialDomain .
+
+# ── 时间类型
+pde:SteadyState rdf:type owl:Class ; rdfs:subClassOf pde:TemporalType .
+pde:Transient   rdf:type owl:Class ; rdfs:subClassOf pde:TemporalType .
+[ rdf:type owl:AllDisjointClasses ; owl:members ( pde:SteadyState pde:Transient ) ] .
+
+# ── 求解器层次（互斥叶节点）
+pde:PINNSolver         rdf:type owl:Class ; rdfs:subClassOf pde:SolverMethod .
+pde:XNetSolver         rdf:type owl:Class ; rdfs:subClassOf pde:PINNSolver .
+pde:StandardPINNSolver rdf:type owl:Class ; rdfs:subClassOf pde:PINNSolver .
+pde:FDMSolver          rdf:type owl:Class ; rdfs:subClassOf pde:SolverMethod .
+pde:FEMSolver          rdf:type owl:Class ; rdfs:subClassOf pde:SolverMethod .
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( pde:XNetSolver pde:StandardPINNSolver pde:FDMSolver pde:FEMSolver ) ] .
+
+# ── 数值特性
+pde:RegularProblem     rdf:type owl:Class ; rdfs:subClassOf pde:NumericalProperty .
+pde:StiffProblem       rdf:type owl:Class ; rdfs:subClassOf pde:NumericalProperty .
+pde:SingularityPresent rdf:type owl:Class ; rdfs:subClassOf pde:NumericalProperty .
+pde:HighDimensional    rdf:type owl:Class ; rdfs:subClassOf pde:NumericalProperty .
+pde:ConvectionDominated rdf:type owl:Class ; rdfs:subClassOf pde:NumericalProperty .
+
+# ── 方程类型互斥（幻觉防火墙核心）
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( pde:EllipticPDE pde:ParabolicPDE pde:HyperbolicPDE ) ] .
+
+# ───────────────────────────────────────────────────────
+# SECTION 4 — RBOX (对象属性 + 数据属性)
+# ───────────────────────────────────────────────────────
+
+pde:governedBy
+    rdf:type owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain pde:PDEProblem ; rdfs:range pde:EquationType .
+
+pde:hasBoundaryCondition
+    rdf:type owl:ObjectProperty ;
+    rdfs:domain pde:PDEProblem ; rdfs:range pde:BoundaryCondition .
+
+pde:hasSpatialDomain
+    rdf:type owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain pde:PDEProblem ; rdfs:range pde:SpatialDomain .
+
+pde:hasTemporalType
+    rdf:type owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain pde:PDEProblem ; rdfs:range pde:TemporalType .
+
+pde:hasNumericalProperty
+    rdf:type owl:ObjectProperty ;
+    rdfs:domain pde:PDEProblem ; rdfs:range pde:NumericalProperty .
+
+pde:solvedBy
+    rdf:type owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:domain pde:PDEProblem ; rdfs:range pde:SolverMethod .
+
+pde:isSolverCompatibleWith
+    rdf:type owl:ObjectProperty ;
+    rdfs:domain pde:SolverMethod ; rdfs:range pde:NumericalProperty .
+
+pde:notCompatibleWith
+    rdf:type owl:ObjectProperty ;
+    rdfs:domain pde:SolverMethod ; rdfs:range pde:NumericalProperty .
+
+pde:isSubPDEOf
+    rdf:type owl:ObjectProperty, owl:TransitiveProperty ;
+    rdfs:domain pde:EquationType ; rdfs:range pde:EquationType .
+
+pde:hasParameter
+    rdf:type owl:ObjectProperty ;
+    rdfs:domain pde:PDEProblem ; rdfs:range qudt:Quantity .
+
+# 数据属性
+pde:spaceDimension   rdf:type owl:DatatypeProperty ; rdfs:domain pde:PDEProblem ; rdfs:range xsd:integer .
+pde:timeEnd          rdf:type owl:DatatypeProperty ; rdfs:domain pde:PDEProblem ; rdfs:range xsd:double .
+pde:benchmarkMSE     rdf:type owl:DatatypeProperty ; rdfs:domain pde:PDEProblem ; rdfs:range xsd:double .
+pde:physicsResidual  rdf:type owl:DatatypeProperty ; rdfs:domain pde:PDEProblem ; rdfs:range xsd:double .
+pde:maxDimension     rdf:type owl:DatatypeProperty ; rdfs:domain pde:SolverMethod ; rdfs:range xsd:integer .
+pde:paperReference   rdf:type owl:DatatypeProperty ; rdfs:domain pde:SolverMethod ; rdfs:range xsd:string .
+pde:complianceStd    rdf:type owl:DatatypeProperty ; rdfs:range xsd:string .
+
+# ───────────────────────────────────────────────────────
+# SECTION 5 — ABOX (最小实例集)
+# ───────────────────────────────────────────────────────
+
+# ── 求解器实例
+pde:XNetSolver_v1
+    rdf:type pde:XNetSolver, prov:SoftwareAgent ;
+    pde:isSolverCompatibleWith pde:RegularProblem ;
+    pde:isSolverCompatibleWith pde:StiffProblem ;
+    pde:isSolverCompatibleWith pde:SingularityPresent ;
+    pde:isSolverCompatibleWith pde:HighDimensional ;
+    pde:isSolverCompatibleWith pde:ConvectionDominated ;
+    pde:maxDimension 1000 ;
+    pde:paperReference "NeurIPS 2025" ;
+    prov:label "compleX-PINN XNet Solver v1.0" .
+
+pde:FDMSolver_v1
+    rdf:type pde:FDMSolver, prov:SoftwareAgent ;
+    pde:isSolverCompatibleWith pde:RegularProblem ;
+    pde:notCompatibleWith pde:HighDimensional ;
+    pde:notCompatibleWith pde:SingularityPresent ;
+    pde:maxDimension 3 ;
+    prov:label "Finite Difference Method Solver v1.0" .
+
+pde:FEMSolver_v1
+    rdf:type pde:FEMSolver, prov:SoftwareAgent ;
+    pde:isSolverCompatibleWith pde:RegularProblem ;
+    pde:notCompatibleWith pde:HighDimensional ;
+    pde:maxDimension 3 ;
+    prov:label "Finite Element Method Solver v1.0" .
+
+pde:LLMFrontend_v1
+    rdf:type prov:SoftwareAgent ;
+    prov:label "Claude claude-sonnet-4-6 PDE Agent Frontend" .
+
+pde:OntologyReasoner_v1
+    rdf:type prov:SoftwareAgent ;
+    prov:label "CauchyX OWL Reasoner v0.2" .
+
+# ── 基准问题实例（用于近邻匹配，防止性能幻觉）
+pde:Benchmark_Poisson2D
+    rdf:type pde:PDEProblem ;
+    pde:governedBy pde:PoissonEquation ;
+    pde:hasTemporalType pde:SteadyState ;
+    pde:hasSpatialDomain pde:Domain2D ;
+    pde:hasBoundaryCondition pde:DirichletBC ;
+    pde:hasNumericalProperty pde:RegularProblem ;
+    pde:spaceDimension 2 ;
+    pde:benchmarkMSE "1.09e-9"^^xsd:double ;
+    pde:solvedBy pde:XNetSolver_v1 .
+
+pde:Benchmark_Heat1D
+    rdf:type pde:PDEProblem ;
+    pde:governedBy pde:HeatEquation ;
+    pde:hasTemporalType pde:Transient ;
+    pde:hasSpatialDomain pde:Domain1D ;
+    pde:hasBoundaryCondition pde:DirichletBC ;
+    pde:hasNumericalProperty pde:RegularProblem ;
+    pde:spaceDimension 1 ;
+    pde:benchmarkMSE "3.69e-9"^^xsd:double ;
+    pde:solvedBy pde:XNetSolver_v1 .
+
+pde:Benchmark_Wave1D
+    rdf:type pde:PDEProblem ;
+    pde:governedBy pde:WaveEquation ;
+    pde:hasTemporalType pde:Transient ;
+    pde:hasSpatialDomain pde:Domain1D ;
+    pde:hasBoundaryCondition pde:DirichletBC ;
+    pde:hasNumericalProperty pde:RegularProblem ;
+    pde:spaceDimension 1 ;
+    pde:solvedBy pde:XNetSolver_v1 .
+
+pde:Benchmark_Burgers1D
+    rdf:type pde:PDEProblem ;
+    pde:governedBy pde:BurgersEquation ;
+    pde:hasTemporalType pde:Transient ;
+    pde:hasSpatialDomain pde:Domain1D ;
+    pde:hasBoundaryCondition pde:PeriodicBC ;
+    pde:hasNumericalProperty pde:SingularityPresent ;
+    pde:hasNumericalProperty pde:StiffProblem ;
+    pde:spaceDimension 1 ;
+    pde:solvedBy pde:XNetSolver_v1 .
+
+pde:Benchmark_Advection1D
+    rdf:type pde:PDEProblem ;
+    pde:governedBy pde:AdvectionEquation ;
+    pde:hasTemporalType pde:Transient ;
+    pde:hasSpatialDomain pde:Domain1D ;
+    pde:hasBoundaryCondition pde:PeriodicBC ;
+    pde:hasNumericalProperty pde:ConvectionDominated ;
+    pde:spaceDimension 1 ;
+    pde:solvedBy pde:FDMSolver_v1 .
+
+pde:Benchmark_HighDim100
+    rdf:type pde:PDEProblem ;
+    pde:governedBy pde:ParabolicPDE ;
+    pde:hasTemporalType pde:Transient ;
+    pde:hasNumericalProperty pde:HighDimensional ;
+    pde:spaceDimension 100 ;
+    pde:benchmarkMSE "6.85e-4"^^xsd:double ;
+    pde:solvedBy pde:XNetSolver_v1 .
