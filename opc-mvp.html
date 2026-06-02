@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OPC Lite — Minimum MVP</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0a0f;
+      --bg2:      #12121a;
+      --bg3:      #1a1a26;
+      --border:   #2a2a3e;
+      --cyan:     #00ccee;
+      --gold:     #d4a017;
+      --purple:   #7c3aed;
+      --green:    #4ade80;
+      --red:      #f87171;
+      --text:     #e2e8f0;
+      --muted:    #94a3b8;
+      --mono:     'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      --sans:     'Inter', 'Segoe UI', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #0d0d1a 0%, #12121f 60%, #0e0e1c 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 2rem 2.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% -10%, rgba(0,204,238,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(0,204,238,0.1);
+      border: 1px solid rgba(0,204,238,0.3);
+      color: var(--cyan);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.9rem;
+      border-radius: 2rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 0%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.75rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .subtitle strong { color: var(--gold); }
+
+    /* ── LAYOUT ── */
+    main {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+
+    /* ── SECTION HEADERS ── */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .section-label .num {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--cyan);
+      background: rgba(0,204,238,0.1);
+      border: 1px solid rgba(0,204,238,0.25);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .section-label h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .section-label .line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+    }
+    .card-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    /* ── COMPARISON TABLE ── */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .compare-table th {
+      background: var(--bg3);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-table th:first-child { border-radius: 8px 0 0 0; }
+    .compare-table th:last-child  { border-radius: 0 8px 0 0; }
+    .compare-table td {
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid rgba(42,42,62,0.5);
+      vertical-align: top;
+    }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .compare-table td:first-child {
+      font-weight: 600;
+      color: var(--muted);
+      white-space: nowrap;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+    }
+    .in   { color: var(--green); }
+    .out  { color: #475569; text-decoration: line-through; }
+    .tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      vertical-align: middle;
+      margin-left: 0.3rem;
+    }
+    .tag-in  { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.25); }
+    .tag-out { background: rgba(71,85,105,0.15);  color: #475569;      border: 1px solid rgba(71,85,105,0.3); }
+
+    /* ── SVG DIAGRAM ── */
+    .diagram-wrapper {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+    .diagram-wrapper svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* ── FLOW STEPS ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .step {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .step:hover { border-color: rgba(0,204,238,0.3); }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(0,204,238,0.12);
+      border: 1px solid rgba(0,204,238,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-top: 0.1rem;
+    }
+    .step-title {
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.2rem;
+    }
+    .step-desc { color: var(--muted); font-size: 0.9rem; }
+    code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: rgba(0,204,238,0.08);
+      color: var(--cyan);
+      padding: 0.1em 0.4em;
+      border-radius: 4px;
+    }
+
+    /* ── HYPOTHESES ── */
+    .hypo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .hypo-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      border-top: 3px solid;
+    }
+    .hypo-card:nth-child(1) { border-top-color: var(--cyan); }
+    .hypo-card:nth-child(2) { border-top-color: var(--gold); }
+    .hypo-card:nth-child(3) { border-top-color: var(--purple); }
+    .hypo-card:nth-child(4) { border-top-color: var(--green); }
+    .hypo-label {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .hypo-card:nth-child(1) .hypo-label { color: var(--cyan); }
+    .hypo-card:nth-child(2) .hypo-label { color: var(--gold); }
+    .hypo-card:nth-child(3) .hypo-label { color: var(--purple); }
+    .hypo-card:nth-child(4) .hypo-label { color: var(--green); }
+    .hypo-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.4rem; color: #fff; }
+    .hypo-desc  { color: var(--muted); font-size: 0.85rem; }
+
+    /* ── TIMELINE ── */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 28px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+    .tl-item {
+      display: flex;
+      gap: 1.25rem;
+      padding: 0 0 1.5rem 0;
+      position: relative;
+    }
+    .tl-dot {
+      flex-shrink: 0;
+      width: 58px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    .tl-week {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--cyan);
+      background: var(--bg);
+      border: 1px solid rgba(0,204,238,0.3);
+      border-radius: 4px;
+      padding: 0.25rem 0.4rem;
+      display: inline-block;
+      line-height: 1;
+    }
+    .tl-body {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      flex: 1;
+    }
+    .tl-title { font-weight: 700; color: #fff; margin-bottom: 0.3rem; }
+    .tl-tasks { color: var(--muted); font-size: 0.875rem; }
+    .tl-tasks li { margin-left: 1.1rem; margin-top: 0.2rem; }
+
+    /* ── COST TABLE ── */
+    .cost-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .cost-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .cost-label { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.5rem; font-family: var(--mono); }
+    .cost-value { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .cost-detail { color: var(--muted); font-size: 0.78rem; }
+    .cost-card:nth-child(1) .cost-value { color: var(--red); }
+    .cost-card:nth-child(2) .cost-value { color: var(--gold); }
+    .cost-card:nth-child(3) .cost-value { color: var(--green); }
+    .cost-card:nth-child(4) .cost-value { color: var(--cyan); }
+    .cost-summary {
+      margin-top: 1rem;
+      background: rgba(0,204,238,0.05);
+      border: 1px solid rgba(0,204,238,0.2);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .cost-summary .label { color: var(--muted); font-size: 0.9rem; }
+    .cost-summary .value { font-size: 1.1rem; font-weight: 700; color: var(--cyan); font-family: var(--mono); }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-family: var(--mono);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">MVP Spec · v0.1</div>
+  <h1>OPC Lite — Minimum MVP</h1>
+  <p class="subtitle">A <strong>one-person content company</strong> in a box — stripped to the fewest moving parts that can prove the core hypothesis end-to-end.</p>
+</header>
+
+<main>
+
+  <!-- ── SECTION 1: COMPARISON TABLE ── -->
+  <section>
+    <div class="section-label">
+      <span class="num">01</span>
+      <h2>MVP vs Full Platform</h2>
+      <div class="line"></div>
+    </div>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Full OPC Architecture</th>
+            <th>OPC Lite MVP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Service Verticals</td>
+            <td class="out">5 verticals (Creator, AI Tool, E-commerce, Education, Enterprise)</td>
+            <td class="in">1 vertical: Content Creator OPC <span class="tag tag-in">INCLUDED</span></td>
+          </tr>
+          <tr>
+            <td>Agent Matrix</td>
+            <td class="out">20–50 virtual agents with CEO evaluation loop</td>
+            <td class="in">3 agents: Planner · Creator · Critic <span class="tag tag-in">INCLUDED</span></td>
+          </tr>
+          <tr>
+            <td>LLM Layer</td>
+            <td class="out">OCI self-hosted open-source models + FTaaS pipeline</td>
+            <td class="in">Claude API only (Sonnet / Haiku) <span class="tag tag-in">INCLUDED</span></td>
+          </tr>
+          <tr>
+            <td>Entry Channels</td>
+            <td class="out">Web · WeChat · Telegram · Mobile · API · OpenAgent</td>
+            <td class="in">Web dashboard only <span class="tag tag-in">INCLUDED</span></td>
+          </tr>
+          <tr>
+            <td>Knowledge Layer</td>
+            <td class="out">Full knowledge graph + model registry + fine-tune store</td>
+            <td class="in">Basic memory with ChromaDB vector store <span class="tag tag-in">INCLUDED</span></td>
+          </tr>
+          <tr>
+            <td>User Mgmt</td>
+            <td class="out">Multi-tenant RBAC, org hierarchies, SSO</td>
+            <td class="in">Single-user auth (email + password / Google OAuth) <span class="tag tag-in">INCLUDED</span></td>
+          </tr>
+          <tr>
+            <td>Billing</td>
+            <td class="out">Credit wallet, metered usage, enterprise contracts</td>
+            <td class="in">Stripe — single flat plan <span class="tag tag-in">INCLUDED</span></td>
+          </tr>
+          <tr>
+            <td>Social Platforms</td>
+            <td class="out">All major social + comms + office tool integrations</td>
+            <td class="in">1 platform publish (YouTube or TikTok) <span class="tag tag-in">INCLUDED</span></td>
+          </tr>
+          <tr>
+            <td>Work Loop</td>
+            <td class="out">Full OODA loop with CEO evaluation, multi-round debate</td>
+            <td class="in">Story → Plan → Create → Review → Output <span class="tag tag-in">INCLUDED</span></td>
+          </tr>
+          <tr>
+            <td>Infrastructure</td>
+            <td class="out">OCI multi-region · K8s · GPU cluster · distributed cache</td>
+            <td class="in">Single cloud VM · PostgreSQL · ChromaDB <span class="tag tag-in">INCLUDED</span></td>
+          </tr>
+          <tr>
+            <td>Analytics</td>
+            <td class="out">Business intelligence, agent performance dashboards</td>
+            <td class="out">Deferred <span class="tag tag-out">LATER</span></td>
+          </tr>
+          <tr>
+            <td>Multi-tenancy</td>
+            <td class="out">Unlimited orgs, sub-accounts, white-label</td>
+            <td class="out">Deferred <span class="tag tag-out">LATER</span></td>
+          </tr>
+          <tr>
+            <td>Fine-tuning</td>
+            <td class="out">FTaaS pipeline, LoRA adapters, model registry</td>
+            <td class="out">Deferred <span class="tag tag-out">LATER</span></td>
+          </tr>
+          <tr>
+            <td>Mobile App</td>
+            <td class="out">iOS + Android native apps</td>
+            <td class="out">Deferred <span class="tag tag-out">LATER</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── SECTION 2: SVG ARCHITECTURE DIAGRAM ── -->
+  <section>
+    <div class="section-label">
+      <span class="num">02</span>
+      <h2>MVP Architecture Diagram</h2>
+      <div class="line"></div>
+    </div>
+    <div class="diagram-wrapper">
+      <svg viewBox="0 0 900 580" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono','Fira Code',monospace" role="img" aria-label="OPC Lite MVP Architecture">
+
+        <defs>
+          <!-- Arrow markers -->
+          <marker id="arrow-cyan" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#00ccee"/>
+          </marker>
+          <marker id="arrow-gold" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#d4a017"/>
+          </marker>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#7c3aed"/>
+          </marker>
+          <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#4ade80"/>
+          </marker>
+          <marker id="arrow-gray" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#475569"/>
+          </marker>
+          <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#f87171"/>
+          </marker>
+
+          <!-- Glow filter -->
+          <filter id="glow-cyan" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-gold" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+
+          <!-- Grid pattern -->
+          <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.025)" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background -->
+        <rect width="900" height="580" fill="#0a0a0f" rx="10"/>
+        <rect width="900" height="580" fill="url(#grid)" rx="10"/>
+        <!-- Subtle gradient overlay -->
+        <radialGradient id="bg-glow" cx="50%" cy="40%" r="50%">
+          <stop offset="0%" stop-color="rgba(0,204,238,0.04)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <rect width="900" height="580" fill="url(#bg-glow)" rx="10"/>
+
+        <!-- ── TITLE ── -->
+        <text x="450" y="28" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle" letter-spacing="0.05em">OPC LITE — MVP ARCHITECTURE</text>
+        <line x1="200" y1="36" x2="700" y2="36" stroke="rgba(0,204,238,0.2)" stroke-width="0.5"/>
+
+        <!-- ══════════════════════════════════════════
+             LEFT: USER
+             ══════════════════════════════════════════ -->
+        <!-- User box -->
+        <rect x="20" y="180" width="90" height="110" rx="8" fill="#12121a" stroke="#2a2a3e" stroke-width="1.5"/>
+        <!-- Person icon -->
+        <circle cx="65" cy="215" r="16" fill="none" stroke="#00ccee" stroke-width="2"/>
+        <circle cx="65" cy="210" r="6" fill="#00ccee" opacity="0.85"/>
+        <path d="M49 236 Q49 224 65 224 Q81 224 81 236" fill="none" stroke="#00ccee" stroke-width="2" stroke-linecap="round"/>
+        <text x="65" y="256" fill="#00ccee" font-size="9" font-weight="700" text-anchor="middle">ONE-PERSON</text>
+        <text x="65" y="268" fill="#00ccee" font-size="9" font-weight="700" text-anchor="middle">CREATOR</text>
+        <rect x="28" y="275" width="74" height="8" rx="2" fill="rgba(0,204,238,0.12)"/>
+        <text x="65" y="283" fill="#00ccee" font-size="7.5" text-anchor="middle">@newsletter / YT</text>
+
+        <!-- ══════════════════════════════════════════
+             TOP RIGHT: WEB DASHBOARD
+             ══════════════════════════════════════════ -->
+        <rect x="640" y="50" width="230" height="90" rx="8" fill="#12121a" stroke="#2a2a3e" stroke-width="1.5"/>
+        <rect x="640" y="50" width="230" height="26" rx="8" fill="#1a1a26"/>
+        <rect x="640" y="66" width="230" height="10" fill="#1a1a26"/>
+        <!-- Browser dots -->
+        <circle cx="658" cy="63" r="4" fill="#f87171" opacity="0.8"/>
+        <circle cx="672" cy="63" r="4" fill="#d4a017" opacity="0.8"/>
+        <circle cx="686" cy="63" r="4" fill="#4ade80" opacity="0.8"/>
+        <text x="755" y="66" fill="#94a3b8" font-size="8.5" text-anchor="middle">Web Dashboard</text>
+        <!-- Dashboard UI mockup -->
+        <rect x="652" y="82" width="95" height="48" rx="4" fill="#0d0d1a" stroke="#2a2a3e" stroke-width="1"/>
+        <rect x="655" y="85" width="89" height="8" rx="2" fill="rgba(0,204,238,0.15)"/>
+        <rect x="655" y="97" width="70" height="4" rx="1" fill="rgba(255,255,255,0.06)"/>
+        <rect x="655" y="105" width="80" height="4" rx="1" fill="rgba(255,255,255,0.06)"/>
+        <rect x="655" y="113" width="55" height="4" rx="1" fill="rgba(255,255,255,0.06)"/>
+        <!-- Project list -->
+        <rect x="755" y="82" width="105" height="48" rx="4" fill="#0d0d1a" stroke="#2a2a3e" stroke-width="1"/>
+        <text x="758" y="93" fill="#94a3b8" font-size="7">Projects</text>
+        <rect x="758" y="97" width="95" height="9" rx="2" fill="rgba(0,204,238,0.1)"/>
+        <rect x="758" y="109" width="95" height="9" rx="2" fill="rgba(255,255,255,0.04)"/>
+        <rect x="758" y="121" width="95" height="9" rx="2" fill="rgba(255,255,255,0.04)"/>
+        <text x="760" y="104" fill="#00ccee" font-size="6.5">OPC Project #1</text>
+        <text x="760" y="116" fill="#475569" font-size="6.5">Draft · AI Tools ep4</text>
+        <text x="760" y="128" fill="#475569" font-size="6.5">Published · Newsletter 12</text>
+        <text x="755" y="148" fill="#ffffff" font-size="9" font-weight="600" text-anchor="middle">+ Auth · Project List · Settings</text>
+
+        <!-- Arrow: User → Web Dashboard -->
+        <path d="M 110 210 L 620 90 L 640 90" fill="none" stroke="#00ccee" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrow-cyan)" opacity="0.7"/>
+        <text x="360" y="143" fill="#00ccee" font-size="8.5" transform="rotate(-14,360,143)">Browser Session</text>
+
+        <!-- ══════════════════════════════════════════
+             TOP CENTER: STORY INPUT
+             ══════════════════════════════════════════ -->
+        <rect x="185" y="50" width="200" height="80" rx="8" fill="#12121a" stroke="#d4a017" stroke-width="1.5" filter="url(#glow-gold)"/>
+        <rect x="185" y="50" width="200" height="24" rx="8" fill="rgba(212,160,23,0.12)"/>
+        <rect x="185" y="62" width="200" height="12" fill="rgba(212,160,23,0.12)"/>
+        <text x="285" y="66" fill="#d4a017" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.08em">STORY INPUT</text>
+        <rect x="195" y="80" width="180" height="40" rx="4" fill="#0a0a0f" stroke="#2a2a3e" stroke-width="1"/>
+        <text x="285" y="95" fill="#e2e8f0" font-size="8.5" text-anchor="middle">"I want to make a YouTube video</text>
+        <text x="285" y="107" fill="#e2e8f0" font-size="8.5" text-anchor="middle">about AI agents for beginners"</text>
+        <text x="285" y="120" fill="#94a3b8" font-size="7.5" text-anchor="middle">natural language goal · free-form</text>
+
+        <!-- Arrow: User → Story Input -->
+        <path d="M 110 225 L 185 90" fill="none" stroke="#d4a017" stroke-width="2" marker-end="url(#arrow-gold)"/>
+        <text x="130" y="165" fill="#d4a017" font-size="8" transform="rotate(-70,130,165)">Story</text>
+
+        <!-- ══════════════════════════════════════════
+             CENTER: 3-AGENT PIPELINE
+             ══════════════════════════════════════════ -->
+
+        <!-- ── PLANNER AGENT ── -->
+        <rect x="155" y="185" width="145" height="115" rx="8" fill="#12121a" stroke="#00ccee" stroke-width="2" filter="url(#glow-cyan)"/>
+        <rect x="155" y="185" width="145" height="28" rx="8" fill="rgba(0,204,238,0.12)"/>
+        <rect x="155" y="203" width="145" height="10" fill="rgba(0,204,238,0.12)"/>
+        <!-- Agent icon -->
+        <rect x="163" y="191" width="14" height="14" rx="3" fill="none" stroke="#00ccee" stroke-width="1.5"/>
+        <text x="170" y="201" fill="#00ccee" font-size="7" text-anchor="middle">A</text>
+        <text x="227" y="202" fill="#00ccee" font-size="9.5" font-weight="700" text-anchor="middle">PLANNER AGENT</text>
+        <!-- Details -->
+        <text x="227" y="224" fill="#94a3b8" font-size="8" text-anchor="middle">· Parse story intent</text>
+        <text x="227" y="236" fill="#94a3b8" font-size="8" text-anchor="middle">· Generate outline</text>
+        <text x="227" y="248" fill="#94a3b8" font-size="8" text-anchor="middle">· Break into tasks</text>
+        <text x="227" y="260" fill="#94a3b8" font-size="8" text-anchor="middle">· Set content strategy</text>
+        <rect x="163" y="272" width="129" height="18" rx="3" fill="rgba(0,204,238,0.08)" stroke="rgba(0,204,238,0.2)" stroke-width="1"/>
+        <text x="227" y="284" fill="#00ccee" font-size="7.5" text-anchor="middle">Model: claude-haiku-4-5</text>
+
+        <!-- ── CREATOR AGENT ── -->
+        <rect x="375" y="185" width="145" height="115" rx="8" fill="#12121a" stroke="#00ccee" stroke-width="2" filter="url(#glow-cyan)"/>
+        <rect x="375" y="185" width="145" height="28" rx="8" fill="rgba(0,204,238,0.12)"/>
+        <rect x="375" y="203" width="145" height="10" fill="rgba(0,204,238,0.12)"/>
+        <rect x="383" y="191" width="14" height="14" rx="3" fill="none" stroke="#00ccee" stroke-width="1.5"/>
+        <text x="390" y="201" fill="#00ccee" font-size="7" text-anchor="middle">A</text>
+        <text x="447" y="202" fill="#00ccee" font-size="9.5" font-weight="700" text-anchor="middle">CREATOR AGENT</text>
+        <text x="447" y="224" fill="#94a3b8" font-size="8" text-anchor="middle">· Write full script</text>
+        <text x="447" y="236" fill="#94a3b8" font-size="8" text-anchor="middle">· Draft thumbnail brief</text>
+        <text x="447" y="248" fill="#94a3b8" font-size="8" text-anchor="middle">· Write description</text>
+        <text x="447" y="260" fill="#94a3b8" font-size="8" text-anchor="middle">· Generate SEO tags</text>
+        <rect x="383" y="272" width="129" height="18" rx="3" fill="rgba(0,204,238,0.08)" stroke="rgba(0,204,238,0.2)" stroke-width="1"/>
+        <text x="447" y="284" fill="#00ccee" font-size="7.5" text-anchor="middle">Model: claude-sonnet-4-5</text>
+
+        <!-- ── CRITIC AGENT ── -->
+        <rect x="595" y="185" width="145" height="115" rx="8" fill="#12121a" stroke="#00ccee" stroke-width="2" filter="url(#glow-cyan)"/>
+        <rect x="595" y="185" width="145" height="28" rx="8" fill="rgba(0,204,238,0.12)"/>
+        <rect x="595" y="203" width="145" height="10" fill="rgba(0,204,238,0.12)"/>
+        <rect x="603" y="191" width="14" height="14" rx="3" fill="none" stroke="#00ccee" stroke-width="1.5"/>
+        <text x="610" y="201" fill="#00ccee" font-size="7" text-anchor="middle">A</text>
+        <text x="667" y="202" fill="#00ccee" font-size="9.5" font-weight="700" text-anchor="middle">CRITIC AGENT</text>
+        <text x="667" y="224" fill="#94a3b8" font-size="8" text-anchor="middle">· Score quality (1–10)</text>
+        <text x="667" y="236" fill="#94a3b8" font-size="8" text-anchor="middle">· Check tone + clarity</text>
+        <text x="667" y="248" fill="#94a3b8" font-size="8" text-anchor="middle">· Suggest revisions</text>
+        <text x="667" y="260" fill="#94a3b8" font-size="8" text-anchor="middle">· Approve / reject</text>
+        <rect x="603" y="272" width="129" height="18" rx="3" fill="rgba(0,204,238,0.08)" stroke="rgba(0,204,238,0.2)" stroke-width="1"/>
+        <text x="667" y="284" fill="#00ccee" font-size="7.5" text-anchor="middle">Model: claude-haiku-4-5</text>
+
+        <!-- Forward arrows between agents -->
+        <!-- Story Input → Planner -->
+        <path d="M 285 130 L 285 160 L 227 160 L 227 185" fill="none" stroke="#d4a017" stroke-width="1.8" marker-end="url(#arrow-gold)"/>
+        <text x="220" y="157" fill="#d4a017" font-size="7.5">goal</text>
+
+        <!-- Planner → Creator -->
+        <path d="M 300 242 L 375 242" fill="none" stroke="#00ccee" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+        <text x="320" y="235" fill="#00ccee" font-size="8">plan</text>
+
+        <!-- Creator → Critic -->
+        <path d="M 520 242 L 595 242" fill="none" stroke="#00ccee" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+        <text x="538" y="235" fill="#00ccee" font-size="8">draft</text>
+
+        <!-- ── FEEDBACK LOOP: Critic → Planner ── -->
+        <!-- Curved path going over the top of agents -->
+        <path d="M 667 185 L 667 155 Q 667 140 650 140 L 250 140 Q 227 140 227 155 L 227 185"
+              fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arrow-red)"/>
+        <text x="445" y="135" fill="#f87171" font-size="8" text-anchor="middle">revision request (if score &lt; 7)</text>
+
+        <!-- ── SHARED MEMORY ── -->
+        <rect x="315" y="360" width="260" height="75" rx="8" fill="#12121a" stroke="#7c3aed" stroke-width="1.5"/>
+        <rect x="315" y="360" width="260" height="24" rx="8" fill="rgba(124,58,237,0.15)"/>
+        <rect x="315" y="374" width="260" height="10" fill="rgba(124,58,237,0.15)"/>
+        <text x="445" y="376" fill="#7c3aed" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.06em">SHARED MEMORY LAYER</text>
+        <!-- Memory cells -->
+        <rect x="323" y="390" width="75" height="35" rx="4" fill="rgba(124,58,237,0.1)" stroke="rgba(124,58,237,0.3)" stroke-width="1"/>
+        <text x="360" y="403" fill="#7c3aed" font-size="7.5" text-anchor="middle">Style Profile</text>
+        <text x="360" y="414" fill="#94a3b8" font-size="6.5" text-anchor="middle">tone, vocab</text>
+        <text x="360" y="422" fill="#94a3b8" font-size="6.5" text-anchor="middle">past topics</text>
+        <rect x="406" y="390" width="75" height="35" rx="4" fill="rgba(124,58,237,0.1)" stroke="rgba(124,58,237,0.3)" stroke-width="1"/>
+        <text x="443" y="403" fill="#7c3aed" font-size="7.5" text-anchor="middle">Project Ctx</text>
+        <text x="443" y="414" fill="#94a3b8" font-size="6.5" text-anchor="middle">episode list</text>
+        <text x="443" y="422" fill="#94a3b8" font-size="6.5" text-anchor="middle">outlines</text>
+        <rect x="489" y="390" width="78" height="35" rx="4" fill="rgba(124,58,237,0.1)" stroke="rgba(124,58,237,0.3)" stroke-width="1"/>
+        <text x="528" y="403" fill="#7c3aed" font-size="7.5" text-anchor="middle">Quality Log</text>
+        <text x="528" y="414" fill="#94a3b8" font-size="6.5" text-anchor="middle">scores</text>
+        <text x="528" y="422" fill="#94a3b8" font-size="6.5" text-anchor="middle">critic notes</text>
+        <text x="618" y="395" fill="#7c3aed" font-size="8" text-anchor="start">ChromaDB</text>
+        <text x="618" y="406" fill="#94a3b8" font-size="7" text-anchor="start">vector store</text>
+        <text x="618" y="417" fill="#94a3b8" font-size="7" text-anchor="start">embeddings</text>
+
+        <!-- Memory arrows (agents ↔ memory) -->
+        <path d="M 227 300 L 227 340 L 350 340 L 350 360" fill="none" stroke="#7c3aed" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arrow-purple)" opacity="0.7"/>
+        <path d="M 447 300 L 447 360" fill="none" stroke="#7c3aed" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arrow-purple)" opacity="0.7"/>
+        <path d="M 667 300 L 667 340 L 540 340 L 540 360" fill="none" stroke="#7c3aed" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arrow-purple)" opacity="0.7"/>
+        <text x="348" y="337" fill="#7c3aed" font-size="7">read/write</text>
+
+        <!-- ── CONTENT OUTPUT ── -->
+        <rect x="755" y="185" width="125" height="150" rx="8" fill="#12121a" stroke="#d4a017" stroke-width="1.5" filter="url(#glow-gold)"/>
+        <rect x="755" y="185" width="125" height="26" rx="8" fill="rgba(212,160,23,0.12)"/>
+        <rect x="755" y="201" width="125" height="10" fill="rgba(212,160,23,0.12)"/>
+        <text x="817" y="201" fill="#d4a017" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.05em">OUTPUT</text>
+
+        <!-- Output items -->
+        <rect x="763" y="219" width="109" height="22" rx="3" fill="rgba(74,222,128,0.08)" stroke="rgba(74,222,128,0.2)" stroke-width="1"/>
+        <text x="773" y="232" fill="#4ade80" font-size="7.5">📄 YouTube Script</text>
+        <rect x="763" y="245" width="109" height="22" rx="3" fill="rgba(212,160,23,0.08)" stroke="rgba(212,160,23,0.2)" stroke-width="1"/>
+        <text x="773" y="258" fill="#d4a017" font-size="7.5">🖼 Thumbnail Brief</text>
+        <rect x="763" y="271" width="109" height="22" rx="3" fill="rgba(0,204,238,0.08)" stroke="rgba(0,204,238,0.2)" stroke-width="1"/>
+        <text x="773" y="284" fill="#00ccee" font-size="7.5">📝 Description</text>
+        <rect x="763" y="297" width="109" height="22" rx="3" fill="rgba(124,58,237,0.08)" stroke="rgba(124,58,237,0.2)" stroke-width="1"/>
+        <text x="773" y="310" fill="#7c3aed" font-size="7.5"># SEO Tags</text>
+
+        <!-- Publish icon at bottom of output -->
+        <rect x="763" y="323" width="109" height="6" rx="3" fill="rgba(212,160,23,0.3)"/>
+        <text x="817" y="346" fill="#d4a017" font-size="8" font-weight="600" text-anchor="middle">→ Publish to YouTube</text>
+
+        <!-- Arrow: Critic → Output -->
+        <path d="M 740 242 L 755 242" fill="none" stroke="#d4a017" stroke-width="2" marker-end="url(#arrow-gold)"/>
+        <text x="742" y="235" fill="#d4a017" font-size="7.5">approved</text>
+
+        <!-- Arrow: Output → User (feedback) -->
+        <path d="M 755 320 Q 680 380 110 270" fill="none" stroke="#4ade80" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#arrow-green)" opacity="0.6"/>
+        <text x="420" y="385" fill="#4ade80" font-size="8">published content delivered to creator</text>
+
+        <!-- ══════════════════════════════════════════
+             BOTTOM: INFRASTRUCTURE BAR
+             ══════════════════════════════════════════ -->
+        <rect x="20" y="470" width="860" height="90" rx="8" fill="#0d0d15" stroke="#2a2a3e" stroke-width="1.5"/>
+        <rect x="20" y="470" width="860" height="24" rx="8" fill="#12121a"/>
+        <rect x="20" y="482" width="860" height="12" fill="#12121a"/>
+        <text x="450" y="486" fill="#475569" font-size="9" font-weight="600" text-anchor="middle" letter-spacing="0.1em">INFRASTRUCTURE LAYER</text>
+
+        <!-- Infra blocks -->
+        <rect x="32" y="500" width="190" height="50" rx="6" fill="#12121a" stroke="#2a2a3e" stroke-width="1"/>
+        <text x="127" y="517" fill="#00ccee" font-size="9" font-weight="700" text-anchor="middle">Claude API</text>
+        <text x="127" y="530" fill="#94a3b8" font-size="7.5" text-anchor="middle">Haiku (planning/critic)</text>
+        <text x="127" y="541" fill="#94a3b8" font-size="7.5" text-anchor="middle">Sonnet (creation)</text>
+
+        <rect x="234" y="500" width="170" height="50" rx="6" fill="#12121a" stroke="#2a2a3e" stroke-width="1"/>
+        <text x="319" y="517" fill="#4ade80" font-size="9" font-weight="700" text-anchor="middle">PostgreSQL</text>
+        <text x="319" y="530" fill="#94a3b8" font-size="7.5" text-anchor="middle">users · projects</text>
+        <text x="319" y="541" fill="#94a3b8" font-size="7.5" text-anchor="middle">content records</text>
+
+        <rect x="416" y="500" width="170" height="50" rx="6" fill="#12121a" stroke="#2a2a3e" stroke-width="1"/>
+        <text x="501" y="517" fill="#7c3aed" font-size="9" font-weight="700" text-anchor="middle">ChromaDB</text>
+        <text x="501" y="530" fill="#94a3b8" font-size="7.5" text-anchor="middle">vector embeddings</text>
+        <text x="501" y="541" fill="#94a3b8" font-size="7.5" text-anchor="middle">semantic memory</text>
+
+        <rect x="598" y="500" width="150" height="50" rx="6" fill="#12121a" stroke="#2a2a3e" stroke-width="1"/>
+        <text x="673" y="517" fill="#d4a017" font-size="9" font-weight="700" text-anchor="middle">Stripe</text>
+        <text x="673" y="530" fill="#94a3b8" font-size="7.5" text-anchor="middle">billing · webhooks</text>
+        <text x="673" y="541" fill="#94a3b8" font-size="7.5" text-anchor="middle">single plan</text>
+
+        <rect x="760" y="500" width="110" height="50" rx="6" fill="#12121a" stroke="#2a2a3e" stroke-width="1"/>
+        <text x="815" y="517" fill="#475569" font-size="9" font-weight="700" text-anchor="middle">Cloud VM</text>
+        <text x="815" y="530" fill="#94a3b8" font-size="7.5" text-anchor="middle">single instance</text>
+        <text x="815" y="541" fill="#94a3b8" font-size="7.5" text-anchor="middle">Linux · Docker</text>
+
+        <!-- Arrows from agents down to infra -->
+        <path d="M 227 300 L 227 470" fill="none" stroke="#2a2a3e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
+        <path d="M 447 435 L 447 470" fill="none" stroke="#2a2a3e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
+        <path d="M 667 300 L 667 470" fill="none" stroke="#2a2a3e" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
+
+        <!-- Legend -->
+        <rect x="22" y="455" width="6" height="6" rx="1" fill="#00ccee"/>
+        <text x="33" y="462" fill="#94a3b8" font-size="7">Agent</text>
+        <rect x="68" y="455" width="6" height="6" rx="1" fill="#7c3aed"/>
+        <text x="79" y="462" fill="#94a3b8" font-size="7">Memory</text>
+        <rect x="123" y="455" width="6" height="6" rx="1" fill="#d4a017"/>
+        <text x="134" y="462" fill="#94a3b8" font-size="7">Output / Input</text>
+        <line x1="195" y1="458" x2="210" y2="458" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <text x="215" y="462" fill="#94a3b8" font-size="7">Revision loop</text>
+        <line x1="280" y1="458" x2="295" y2="458" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <text x="300" y="462" fill="#94a3b8" font-size="7">Delivery</text>
+
+      </svg>
+    </div>
+  </section>
+
+  <!-- ── SECTION 3: CORE FLOW ── -->
+  <section>
+    <div class="section-label">
+      <span class="num">03</span>
+      <h2>Core Flow — MVP User Journey</h2>
+      <div class="line"></div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Creator logs in to the Web Dashboard</div>
+          <div class="step-desc">Single-page app authenticates via Google OAuth or email/password. Session is managed with a JWT stored in an <code>httpOnly</code> cookie. Creator sees their project list.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Creator submits a Story Input</div>
+          <div class="step-desc">Free-form natural language goal — e.g. <code>"Make a 10-minute YouTube explainer on AI agents for non-technical founders."</code> — sent to the backend via a REST POST. A new project record is created in PostgreSQL.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Planner Agent generates a structured plan</div>
+          <div class="step-desc">Claude Haiku reads the story, retrieves relevant context from ChromaDB (past topics, creator style profile), and outputs a structured JSON plan: episode outline, target audience, key talking points, content hooks.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">Creator Agent produces the full content package</div>
+          <div class="step-desc">Claude Sonnet takes the plan and writes: full script with timestamps, thumbnail text brief, YouTube description (SEO-optimised), and 10 hashtags. Output is stored as structured JSON in PostgreSQL.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-title">Critic Agent scores and approves or requests revision</div>
+          <div class="step-desc">Claude Haiku evaluates against rubric: clarity, hook strength, factual accuracy, tone match, SEO quality. Returns a score (1–10) plus specific revision notes. If score &lt; 7, a revision request loops back to the Planner with structured feedback. Max 3 revision cycles.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div>
+          <div class="step-title">Creator reviews and approves the final output</div>
+          <div class="step-desc">Dashboard displays the generated package with Critic score and inline suggestions. Creator can edit any section directly, accept as-is, or request a manual re-run. A <code>approved_at</code> timestamp is set on the record.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">7</div>
+        <div>
+          <div class="step-title">One-click publish to YouTube (or copy to clipboard)</div>
+          <div class="step-desc">Via YouTube Data API v3 the description, tags, and thumbnail brief are uploaded as a draft. The script is bundled as a downloadable <code>.pdf</code> teleprompter. Memory layer is updated with the completed project for future context recall.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 4: WHAT THIS VALIDATES ── -->
+  <section>
+    <div class="section-label">
+      <span class="num">04</span>
+      <h2>What This Validates</h2>
+      <div class="line"></div>
+    </div>
+    <div class="hypo-grid">
+      <div class="hypo-card">
+        <div class="hypo-label">H1 · Core Value</div>
+        <div class="hypo-title">Creators will pay for agent-assisted content production</div>
+        <div class="hypo-desc">If 10+ paying users run the loop weekly, the core value proposition is real. Metric: weekly active projects per user.</div>
+      </div>
+      <div class="hypo-card">
+        <div class="hypo-label">H2 · Quality Bar</div>
+        <div class="hypo-title">3-agent loop produces publish-ready content without human editing</div>
+        <div class="hypo-desc">If Critic score averages &gt;7.5 on first approval and users publish &gt;60% of outputs without edits, quality is validated.</div>
+      </div>
+      <div class="hypo-card">
+        <div class="hypo-label">H3 · Unit Economics</div>
+        <div class="hypo-title">Claude API cost stays below $2 per content package</div>
+        <div class="hypo-desc">If average token cost per full run (Planner + Creator + Critic) stays under $2, a $29/mo subscription plan is viable with &gt;40% gross margin.</div>
+      </div>
+      <div class="hypo-card">
+        <div class="hypo-label">H4 · Memory Lift</div>
+        <div class="hypo-title">Persistent memory improves quality over time</div>
+        <div class="hypo-desc">If Critic scores on run #5+ for a project are measurably higher than run #1 (style learning), the ChromaDB memory layer earns its architectural cost.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 5: BUILD TIMELINE ── -->
+  <section>
+    <div class="section-label">
+      <span class="num">05</span>
+      <h2>Build Timeline — 6-Week Plan</h2>
+      <div class="line"></div>
+    </div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot"><span class="tl-week">WK 1</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Foundation &amp; Auth</div>
+          <ul class="tl-tasks">
+            <li>Provision cloud VM (DigitalOcean / Hetzner), configure Docker Compose</li>
+            <li>PostgreSQL schema: <code>users</code>, <code>projects</code>, <code>content_packages</code></li>
+            <li>FastAPI backend skeleton with JWT auth + Google OAuth</li>
+            <li>React/Next.js frontend scaffold — login, dashboard shell</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span class="tl-week">WK 2</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Planner Agent + Memory Layer</div>
+          <ul class="tl-tasks">
+            <li>Claude API integration (Haiku) with structured JSON output via tool use</li>
+            <li>ChromaDB setup: creator style profile + project context collections</li>
+            <li>Story Input UI — text area, project name, target platform selector</li>
+            <li>Plan display view — outline, talking points, estimated length</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span class="tl-week">WK 3</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Creator Agent + Full Content Package</div>
+          <ul class="tl-tasks">
+            <li>Claude Sonnet integration — long-context script generation</li>
+            <li>Output schema: script sections, thumbnail brief, description, tags</li>
+            <li>Content review UI — tabbed view per output section, inline edit</li>
+            <li>PDF export of script for teleprompter use</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span class="tl-week">WK 4</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Critic Agent + Revision Loop</div>
+          <ul class="tl-tasks">
+            <li>Critic prompt — scoring rubric, revision note format</li>
+            <li>Revision loop orchestration — max 3 cycles, escalation to user</li>
+            <li>Quality log written to ChromaDB after each run</li>
+            <li>Score display + revision diff view in dashboard</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span class="tl-week">WK 5</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Stripe Billing + YouTube Publish</div>
+          <ul class="tl-tasks">
+            <li>Stripe Checkout — single <code>$29/mo</code> plan, webhook for activation</li>
+            <li>Usage gate — trial: 3 free runs, then requires active subscription</li>
+            <li>YouTube Data API v3 — OAuth connect, upload draft description + tags</li>
+            <li>Publish status tracking in dashboard — draft / published / failed</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"><span class="tl-week">WK 6</span></div>
+        <div class="tl-body">
+          <div class="tl-title">Polish, Security &amp; Launch</div>
+          <ul class="tl-tasks">
+            <li>Rate limiting, input validation, error boundary UI</li>
+            <li>HTTPS via Caddy reverse proxy, secrets in env vault</li>
+            <li>End-to-end smoke tests for full story → publish flow</li>
+            <li>Soft launch to 10 beta creators — feedback collection via Tally form</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 6: COST STRUCTURE ── -->
+  <section>
+    <div class="section-label">
+      <span class="num">06</span>
+      <h2>Cost Structure — Per-User Economics</h2>
+      <div class="line"></div>
+    </div>
+    <div class="cost-grid">
+      <div class="cost-card">
+        <div class="cost-label">LLM Cost / Run</div>
+        <div class="cost-value">~$1.40</div>
+        <div class="cost-detail">Haiku plan: ~$0.30<br/>Sonnet create: ~$0.90<br/>Haiku critic: ~$0.20</div>
+      </div>
+      <div class="cost-card">
+        <div class="cost-label">Infra Cost / User / Mo</div>
+        <div class="cost-value">~$0.80</div>
+        <div class="cost-detail">VM share: $0.50<br/>DB storage: $0.20<br/>ChromaDB: $0.10</div>
+      </div>
+      <div class="cost-card">
+        <div class="cost-label">Revenue / User / Mo</div>
+        <div class="cost-value">$29</div>
+        <div class="cost-detail">Single flat plan<br/>~20 runs/mo budget<br/>Stripe fee: ~$1.20</div>
+      </div>
+      <div class="cost-card">
+        <div class="cost-label">Gross Margin</div>
+        <div class="cost-value">~54%</div>
+        <div class="cost-detail">At 20 runs/mo/user<br/>COGS: ~$13.20<br/>GM: ~$15.80</div>
+      </div>
+    </div>
+    <div class="cost-summary">
+      <span class="label">Break-even at 10 paying users — infrastructure costs fully covered. Margin expands as runs-per-user decreases or with Haiku routing for shorter content.</span>
+      <span class="value">10 users → breakeven</span>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  OPC Lite MVP Spec &nbsp;·&nbsp; One-Person Company Platform &nbsp;·&nbsp; Content Creator Vertical &nbsp;·&nbsp; v0.1-draft
+</footer>
+
+</body>
+</html>
