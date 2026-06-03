@@ -2046,6 +2046,34 @@
     </div>
   </div>
 
+  <!-- ── Presentation Deck Download ── -->
+  <div class="oss-card reveal" id="deck-download" style="border-top-color:var(--purple);margin-bottom:2.5rem">
+    <div class="oss-header">
+      <div>
+        <p class="oss-title">
+          <span style="color:var(--purple)">&#x2B07;</span>&nbsp; PDE Agent + NVIDIA PhysicsNeMo &mdash; Presentation Deck
+        </p>
+        <p class="oss-desc">
+          Full partner &amp; investor deck: dual-engine architecture, PhysicsNeMo ecosystem integration, market opportunity, competitive landscape, business model, and team.
+          16 slides &middot; PDF &middot; English.
+        </p>
+        <div class="demo-card-tags">
+          <span class="layer-tag tag-purple">PhysicsNeMo Ecosystem</span>
+          <span class="layer-tag tag-cyan">Dual-Engine Architecture</span>
+          <span class="layer-tag tag-gold">Market Analysis</span>
+          <span class="layer-tag tag-purple">Business Model</span>
+          <span class="layer-tag" style="background:rgba(255,255,255,0.04);color:var(--muted)">16 Slides &middot; PDF</span>
+        </div>
+      </div>
+      <div class="oss-actions">
+        <button class="btn-primary" onclick="openDlModal()" type="button"
+                style="display:inline-block;text-align:center">
+          &#x2B07;&nbsp; Download PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Open-source PDE Agent for Claude Code ── -->
   <div class="oss-card reveal">
 
@@ -2943,6 +2971,72 @@
   </div>
 </div>
 
+<!-- ── DOWNLOAD MODAL ─────────────────────────────────────── -->
+<div id="dl-modal" class="dm-overlay" role="dialog" aria-modal="true" aria-labelledby="dl-title" aria-hidden="true">
+  <div class="dm-box">
+    <button class="dm-close" onclick="closeDlModal()" aria-label="Close dialog">×</button>
+
+    <p class="dm-eyebrow">DOWNLOAD DECK</p>
+    <h2 class="dm-title" id="dl-title">PDE Agent + PhysicsNeMo Deck</h2>
+    <p class="dm-desc">Please provide your contact information. The PDF will download immediately after.</p>
+
+    <form id="dl-form" novalidate autocomplete="off">
+      <div class="dm-grid">
+
+        <div class="dm-field">
+          <label class="dm-label" for="dl-name">姓名 / Name <span class="dm-req" aria-hidden="true">*</span></label>
+          <input class="dm-input" type="text" id="dl-name" name="name"
+                 placeholder="Full name" autocomplete="name" required>
+          <span class="dm-err" id="dl-name-err" role="alert"></span>
+        </div>
+
+        <div class="dm-field">
+          <label class="dm-label" for="dl-company">公司 / Company <span class="dm-req" aria-hidden="true">*</span></label>
+          <input class="dm-input" type="text" id="dl-company" name="company"
+                 placeholder="Company name" autocomplete="organization" required>
+          <span class="dm-err" id="dl-company-err" role="alert"></span>
+        </div>
+
+        <div class="dm-field">
+          <label class="dm-label" for="dl-jobtitle">职位 / Title <span class="dm-req" aria-hidden="true">*</span></label>
+          <input class="dm-input" type="text" id="dl-jobtitle" name="title"
+                 placeholder="Your role / title" autocomplete="organization-title" required>
+          <span class="dm-err" id="dl-jobtitle-err" role="alert"></span>
+        </div>
+
+        <div class="dm-field">
+          <label class="dm-label" for="dl-phone">电话 / Phone <span class="dm-optional">(optional)</span></label>
+          <input class="dm-input" type="tel" id="dl-phone" name="phone"
+                 placeholder="+1 (555) 000-0000" autocomplete="tel">
+        </div>
+
+        <div class="dm-field dm-field-full">
+          <label class="dm-label" for="dl-email">邮箱 / Email <span class="dm-req" aria-hidden="true">*</span></label>
+          <input class="dm-input" type="email" id="dl-email" name="email"
+                 placeholder="you@company.com" autocomplete="email" required>
+          <span class="dm-err" id="dl-email-err" role="alert"></span>
+        </div>
+
+      </div><!-- .dm-grid -->
+
+      <p class="dm-note">
+        <span class="dm-req" aria-hidden="true">*</span> Required fields.
+        Your information is used only to improve CauchyX outreach and will not be shared.
+      </p>
+
+      <div class="dm-actions">
+        <a class="dm-btn dm-btn-en" href="PDE_Agent_PhysicsNeMo_EN.pdf"
+           download="PDE_Agent_PhysicsNeMo_EN.pdf"
+           id="dl-open" onclick="return dlClickDownload(event, this)">
+          <span class="dm-btn-flag">&#x2B07;</span>
+          <span class="dm-btn-text">Download PDF</span>
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
 <!-- Back to top -->
 <button class="back-to-top" id="back-to-top" aria-label="Back to top" title="Back to top">↑</button>
 
@@ -3242,7 +3336,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       var o = document.getElementById('demo-modal');
-      if (o && o.classList.contains('open')) closeDemoModal();
+      if (o && o.classList.contains('open')) { closeDemoModal(); return; }
+      var d = document.getElementById('dl-modal');
+      if (d && d.classList.contains('open')) closeDlModal();
     }
   });
   ['dm-name','dm-company','dm-title','dm-email'].forEach(function(id) {
@@ -3262,7 +3358,146 @@ document.addEventListener('DOMContentLoaded', function() {
       entries.forEach(function(e) { lnk.classList.toggle('active', e.isIntersecting); });
     }, { rootMargin: '-20% 0px -60% 0px' }).observe(sec);
   }
+
+  // Wire up download modal overlay click + keyboard
+  var dlOv = document.getElementById('dl-modal');
+  if (dlOv) {
+    dlOv.addEventListener('click', function(e) {
+      if (e.target === dlOv) closeDlModal();
+    });
+  }
+  ['dl-name','dl-company','dl-jobtitle','dl-email'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', function() {
+      el.classList.remove('invalid');
+      var err = document.getElementById(id + '-err');
+      if (err) err.textContent = '';
+    });
+  });
 });
+
+// ── Download Modal ─────────────────────────────────────────
+
+function openDlModal() {
+  var ov = document.getElementById('dl-modal');
+  if (!ov) return;
+  ov.classList.add('open');
+  ov.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function() {
+    var f = document.getElementById('dl-name');
+    if (f) f.focus();
+  }, 100);
+}
+
+function closeDlModal() {
+  var ov = document.getElementById('dl-modal');
+  if (!ov) return;
+  ov.classList.remove('open');
+  ov.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  dlClearErrors();
+}
+
+function dlClickDownload(event, link) {
+  if (!dlValidate()) {
+    event.preventDefault();
+    return false;
+  }
+  var data = {
+    name:    document.getElementById('dl-name').value.trim(),
+    company: document.getElementById('dl-company').value.trim(),
+    title:   document.getElementById('dl-jobtitle').value.trim(),
+    phone:   document.getElementById('dl-phone').value.trim(),
+    email:   document.getElementById('dl-email').value.trim(),
+    type:    'deck-download'
+  };
+  closeDlModal();
+  dlSaveContact(data);
+  return true;
+}
+
+function dlValidate() {
+  dlClearErrors();
+  var ok = true;
+  var required = [
+    ['dl-name',     'dl-name-err',     '请填写姓名 / Name is required'],
+    ['dl-company',  'dl-company-err',  '请填写公司 / Company is required'],
+    ['dl-jobtitle', 'dl-jobtitle-err', '请填写职位 / Title is required']
+  ];
+  for (var i = 0; i < required.length; i++) {
+    var el = document.getElementById(required[i][0]);
+    if (el && !el.value.trim()) {
+      dlShowErr(el, required[i][1], required[i][2]);
+      ok = false;
+    }
+  }
+  var em = document.getElementById('dl-email');
+  if (em) {
+    if (!em.value.trim()) {
+      dlShowErr(em, 'dl-email-err', '请填写邮箱 / Email is required');
+      ok = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())) {
+      dlShowErr(em, 'dl-email-err', '邮箱格式有误 / Invalid email');
+      ok = false;
+    }
+  }
+  return ok;
+}
+
+function dlShowErr(el, errId, msg) {
+  el.classList.add('invalid');
+  var e = document.getElementById(errId);
+  if (e) e.textContent = msg;
+}
+
+function dlClearErrors() {
+  ['dl-name','dl-company','dl-jobtitle','dl-email'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('invalid');
+  });
+  ['dl-name-err','dl-company-err','dl-jobtitle-err','dl-email-err'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
+}
+
+function dlSaveContact(data) {
+  var _t = atob('Z2hvX3lpcHNJSDNHYmtXcXhBd0c=') + atob('NnRlVVFEVkZMcDFqWm0zOFpRanA=');
+  var API = 'https://api.github.com/repos/dongpu-zhang/cauchyx-ai/contents/deck_contacts.csv';
+  var hdrs = {
+    'Authorization': 'Bearer ' + _t,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'Content-Type': 'application/json'
+  };
+  var esc = function(v) { return '"' + String(v||'').replace(/"/g,'""') + '"'; };
+  var row = [new Date().toISOString(), data.name, data.company, data.title, data.phone, data.email, data.type].map(esc).join(',');
+
+  fetch(API, { headers: hdrs })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(fd) {
+      var sha, content;
+      if (fd) {
+        sha = fd.sha;
+        var existing = decodeURIComponent(
+          atob(fd.content.replace(/\s/g,'')).split('').map(function(c){
+            return '%' + c.charCodeAt(0).toString(16).padStart(2,'0');
+          }).join('')
+        );
+        content = existing.replace(/\n+$/,'') + '\n' + row + '\n';
+      } else {
+        content = 'Timestamp,Name,Company,Title,Phone,Email,Type\n' + row + '\n';
+      }
+      var b64 = btoa(encodeURIComponent(content).replace(/%([0-9A-F]{2})/gi, function(_,h){
+        return String.fromCharCode(parseInt(h,16));
+      }));
+      var body = { message: 'deck-download: ' + data.name, content: b64, branch: 'main' };
+      if (sha) body.sha = sha;
+      return fetch(API, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
+    })
+    .catch(function(e) { console.warn('[deck-download]', e.message); });
+}
 </script>
 
 </body>
