@@ -67,13 +67,15 @@
   }
 
   .nav-logo {
-    font-family: var(--mono);
-    font-size: 1rem;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    color: var(--text);
+    display: flex;
+    align-items: center;
+    line-height: 1;
   }
-  .nav-logo span { color: var(--cyan); }
+  .nav-logo img {
+    height: 36px;
+    width: auto;
+    display: block;
+  }
 
   .nav-links {
     display: flex; gap: 2.5rem;
@@ -1461,7 +1463,9 @@
 
 <!-- ── NAV ──────────────────────────────────────────────── -->
 <nav aria-label="Main navigation">
-  <a href="#" class="nav-logo" aria-label="CauchyX AI home">Cauchy<span>X</span></a>
+  <a href="#" class="nav-logo" aria-label="CauchyX AI home">
+    <img src="cauchyx_logo.png" alt="CauchyX AI">
+  </a>
   <ul class="nav-links" id="nav-links" role="list">
     <li><a href="#research">Research</a></li>
     <li><a href="#product">Product</a></li>
