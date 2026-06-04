@@ -390,6 +390,23 @@
     letter-spacing: 0.04em;
   }
 
+  /* ─── VIDEO EMBED ─────────────────────────────────────── */
+  .video-section { max-width: 860px; }
+  .video-wrap {
+    position: relative;
+    padding-top: 56.25%;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #000;
+  }
+  .video-wrap iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border: 0;
+  }
+
   /* ─── COMPARE TABLE ───────────────────────────────────── */
   table {
     width: 100%;
@@ -1467,6 +1484,7 @@
     <img src="cauchyx_logo.png" alt="CauchyX AI">
   </a>
   <ul class="nav-links" id="nav-links" role="list">
+    <li><a href="#video">Video</a></li>
     <li><a href="#research">Research</a></li>
     <li><a href="#product">Product</a></li>
     <li><a href="#papers">Papers</a></li>
@@ -1503,6 +1521,25 @@
     <button class="btn-ghost btn-demo-trigger" onclick="openDemoModal()" type="button">▶ Live Demo</button>
     <a href="https://doi.org/10.1016/j.neunet.2025.107375" class="btn-ghost" target="_blank" rel="noopener noreferrer">Neural Networks 2025</a>
     <a href="#research" class="btn-ghost">Architecture</a>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ── PRODUCT VIDEO ─────────────────────────────────────── -->
+<section id="video" class="video-section">
+  <p class="section-label reveal">Product Demo</p>
+  <h2 class="reveal" style="margin-bottom:0.5rem">See PDE Agent in Action</h2>
+  <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.75rem" class="reveal">
+    Natural-language physics simulation — from problem description to physics-grade results in minutes.
+  </p>
+  <div class="video-wrap reveal">
+    <iframe
+      src="https://www.youtube.com/embed/Rasq9YVD8hM?rel=0&modestbranding=1"
+      title="CauchyX AI — Kill the Bottleneck: PDE Agent Product Demo"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
   </div>
 </section>
 
